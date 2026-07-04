@@ -36,6 +36,19 @@ LinkTrail.shared?.onLink { link, source in
 The install is tracked automatically by `configure`. Observe failures with
 `LinkTrail.shared?.onError { … }`.
 
+## Example app
+
+[`example/`](example/) contains **KickFlip**, a small SwiftUI storefront that shows deferred
+deep linking end to end — it consumes this package's binary exactly as your app would. Requires
+[XcodeGen](https://github.com/yonaskolb/XcodeGen):
+
+```bash
+cd example && xcodegen generate && open KickFlipDemo.xcodeproj
+```
+
+Set your `lt_live_…` key in `KickFlipDemo/SDK/AttributionCoordinator.swift`, then tap the 🔗
+button to fire the four deep-link scenarios (home · category · product · product+voucher).
+
 ## Versioning
 
 Releases are tagged with semantic versions. Each release ships a rebuilt XCFramework.

@@ -1,0 +1,47 @@
+name: KickFlipDemo
+options:
+  bundleIdPrefix: io.linktrail
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+packages:
+  LinkTrail:
+    # The binary SDK package at the repo root (Package.swift → LinkTrailSDK.xcframework).
+    # This is exactly how an external app consumes LinkTrail, but via a local path.
+    path: ../
+
+targets:
+  KickFlipDemo:
+    type: application
+    platform: iOS
+    sources:
+      - KickFlipDemo
+    dependencies:
+      - package: LinkTrail
+        product: LinkTrailSDK
+    entitlements:
+      path: KickFlipDemo/KickFlipDemo.entitlements
+      properties:
+        com.apple.developer.associated-domains:
+          - applinks:kick.linktrail.io
+    settings:
+      base:
+        MARKETING_VERSION: "0.0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        PRODUCT_BUNDLE_IDENTIFIER: io.linktrail.kickflipdemo
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1"
+        DEVELOPMENT_TEAM: ""
+    info:
+      path: KickFlipDemo/Info.plist
+      properties:
+        CFBundleDisplayName: KickFlip
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSUserTrackingUsageDescription: "KickFlip uses this to attribute your install to the campaign you came from and personalize your first experience."
+        CFBundleURLTypes:
+          - CFBundleURLName: io.linktrail.kickflipdemo
+            CFBundleURLSchemes:
+              - kickflip
