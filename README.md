@@ -15,6 +15,14 @@ Or in a `Package.swift`:
 
 Requires iOS 15+.
 
+## Install (CocoaPods)
+
+```ruby
+pod 'LinkTrailSDK', :git => 'https://github.com/linktrail-io/ios-sdk.git', :tag => '0.0.5'
+```
+
+Then run `pod install` and open the generated `.xcworkspace`.
+
 ## Quick start
 
 ```swift
