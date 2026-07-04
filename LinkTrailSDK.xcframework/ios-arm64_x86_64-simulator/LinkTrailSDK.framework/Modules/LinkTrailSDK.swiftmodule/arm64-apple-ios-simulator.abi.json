@@ -1023,6 +1023,13 @@
         "moduleName": "LinkTrailSDK"
       },
       {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LinkTrailSDK"
+      },
+      {
         "kind": "TypeDecl",
         "name": "LinkTrailLogLevel",
         "printedName": "LinkTrailLogLevel",
@@ -1427,6 +1434,41 @@
         "moduleName": "LinkTrailSDK"
       },
       {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LinkTrailSDK"
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LinkTrailSDK"
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LinkTrailSDK"
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LinkTrailSDK"
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LinkTrailSDK"
+      },
+      {
         "kind": "TypeDecl",
         "name": "LinkTrail",
         "printedName": "LinkTrail",
@@ -1799,86 +1841,7 @@
               "AccessControl",
               "RawDocComment"
             ],
-            "funcSelfKind": "NonMutating"
-          },
-          {
-            "kind": "Function",
-            "name": "onDeferredDeepLink",
-            "printedName": "onDeferredDeepLink(_:)",
-            "children": [
-              {
-                "kind": "TypeNominal",
-                "name": "Void",
-                "printedName": "()"
-              },
-              {
-                "kind": "TypeFunc",
-                "name": "Function",
-                "printedName": "(LinkTrailSDK.LinkTrailDeepLink) -> ()",
-                "children": [
-                  {
-                    "kind": "TypeNominal",
-                    "name": "Void",
-                    "printedName": "()"
-                  },
-                  {
-                    "kind": "TypeNominal",
-                    "name": "LinkTrailDeepLink",
-                    "printedName": "LinkTrailSDK.LinkTrailDeepLink",
-                    "usr": "s:12LinkTrailSDK0ab4DeepA0V"
-                  }
-                ]
-              }
-            ],
-            "declKind": "Func",
-            "usr": "s:12LinkTrailSDK0aB0C014onDeferredDeepA0yyyAA0abfA0VcF",
-            "mangledName": "$s12LinkTrailSDK0aB0C014onDeferredDeepA0yyyAA0abfA0VcF",
-            "moduleName": "LinkTrailSDK",
-            "declAttributes": [
-              "Final",
-              "AccessControl",
-              "RawDocComment"
-            ],
-            "funcSelfKind": "NonMutating"
-          },
-          {
-            "kind": "Function",
-            "name": "onDeepLink",
-            "printedName": "onDeepLink(_:)",
-            "children": [
-              {
-                "kind": "TypeNominal",
-                "name": "Void",
-                "printedName": "()"
-              },
-              {
-                "kind": "TypeFunc",
-                "name": "Function",
-                "printedName": "(LinkTrailSDK.LinkTrailDeepLink) -> ()",
-                "children": [
-                  {
-                    "kind": "TypeNominal",
-                    "name": "Void",
-                    "printedName": "()"
-                  },
-                  {
-                    "kind": "TypeNominal",
-                    "name": "LinkTrailDeepLink",
-                    "printedName": "LinkTrailSDK.LinkTrailDeepLink",
-                    "usr": "s:12LinkTrailSDK0ab4DeepA0V"
-                  }
-                ]
-              }
-            ],
-            "declKind": "Func",
-            "usr": "s:12LinkTrailSDK0aB0C06onDeepA0yyyAA0abeA0VcF",
-            "mangledName": "$s12LinkTrailSDK0aB0C06onDeepA0yyyAA0abeA0VcF",
-            "moduleName": "LinkTrailSDK",
-            "declAttributes": [
-              "Final",
-              "AccessControl",
-              "RawDocComment"
-            ],
+            "isFromExtension": true,
             "funcSelfKind": "NonMutating"
           },
           {
@@ -1932,6 +1895,7 @@
               "AccessControl",
               "RawDocComment"
             ],
+            "isFromExtension": true,
             "funcSelfKind": "NonMutating"
           },
           {
@@ -1972,131 +1936,7 @@
               "AccessControl",
               "RawDocComment"
             ],
-            "funcSelfKind": "NonMutating"
-          },
-          {
-            "kind": "Function",
-            "name": "trackInstall",
-            "printedName": "trackInstall(force:)",
-            "children": [
-              {
-                "kind": "TypeNominal",
-                "name": "Void",
-                "printedName": "()"
-              },
-              {
-                "kind": "TypeNominal",
-                "name": "Bool",
-                "printedName": "Swift.Bool",
-                "hasDefaultArg": true,
-                "usr": "s:Sb"
-              }
-            ],
-            "declKind": "Func",
-            "usr": "s:12LinkTrailSDK0aB0C12trackInstall5forceySb_tF",
-            "mangledName": "$s12LinkTrailSDK0aB0C12trackInstall5forceySb_tF",
-            "moduleName": "LinkTrailSDK",
-            "declAttributes": [
-              "Final",
-              "AccessControl",
-              "RawDocComment"
-            ],
-            "funcSelfKind": "NonMutating"
-          },
-          {
-            "kind": "Function",
-            "name": "trackInstall",
-            "printedName": "trackInstall(force:)",
-            "children": [
-              {
-                "kind": "TypeNominal",
-                "name": "LinkTrailAttribution",
-                "printedName": "LinkTrailSDK.LinkTrailAttribution",
-                "usr": "s:12LinkTrailSDK0aB11AttributionV"
-              },
-              {
-                "kind": "TypeNominal",
-                "name": "Bool",
-                "printedName": "Swift.Bool",
-                "hasDefaultArg": true,
-                "usr": "s:Sb"
-              }
-            ],
-            "declKind": "Func",
-            "usr": "s:12LinkTrailSDK0aB0C12trackInstall5forceAA0aB11AttributionVSb_tYaKF",
-            "mangledName": "$s12LinkTrailSDK0aB0C12trackInstall5forceAA0aB11AttributionVSb_tYaKF",
-            "moduleName": "LinkTrailSDK",
-            "declAttributes": [
-              "Final",
-              "AccessControl",
-              "DiscardableResult",
-              "RawDocComment"
-            ],
-            "throwing": true,
-            "funcSelfKind": "NonMutating"
-          },
-          {
-            "kind": "Function",
-            "name": "requestTrackingAuthorization",
-            "printedName": "requestTrackingAuthorization(completion:)",
-            "children": [
-              {
-                "kind": "TypeNominal",
-                "name": "Void",
-                "printedName": "()"
-              },
-              {
-                "kind": "TypeFunc",
-                "name": "Function",
-                "printedName": "(Swift.Bool) -> ()",
-                "children": [
-                  {
-                    "kind": "TypeNominal",
-                    "name": "Void",
-                    "printedName": "()"
-                  },
-                  {
-                    "kind": "TypeNominal",
-                    "name": "Bool",
-                    "printedName": "Swift.Bool",
-                    "usr": "s:Sb"
-                  }
-                ]
-              }
-            ],
-            "declKind": "Func",
-            "usr": "s:12LinkTrailSDK0aB0C28requestTrackingAuthorization10completionyySbc_tF",
-            "mangledName": "$s12LinkTrailSDK0aB0C28requestTrackingAuthorization10completionyySbc_tF",
-            "moduleName": "LinkTrailSDK",
-            "declAttributes": [
-              "Final",
-              "AccessControl",
-              "RawDocComment"
-            ],
-            "funcSelfKind": "NonMutating"
-          },
-          {
-            "kind": "Function",
-            "name": "requestTrackingAuthorization",
-            "printedName": "requestTrackingAuthorization()",
-            "children": [
-              {
-                "kind": "TypeNominal",
-                "name": "Bool",
-                "printedName": "Swift.Bool",
-                "usr": "s:Sb"
-              }
-            ],
-            "declKind": "Func",
-            "usr": "s:12LinkTrailSDK0aB0C28requestTrackingAuthorizationSbyYaF",
-            "mangledName": "$s12LinkTrailSDK0aB0C28requestTrackingAuthorizationSbyYaF",
-            "moduleName": "LinkTrailSDK",
-            "declAttributes": [
-              "Final",
-              "AccessControl",
-              "DiscardableResult",
-              "RawDocComment"
-            ],
+            "isFromExtension": true,
             "funcSelfKind": "NonMutating"
           },
           {
@@ -2127,6 +1967,7 @@
               "DiscardableResult",
               "RawDocComment"
             ],
+            "isFromExtension": true,
             "funcSelfKind": "NonMutating"
           },
           {
@@ -2157,72 +1998,8 @@
               "DiscardableResult",
               "RawDocComment"
             ],
+            "isFromExtension": true,
             "throwing": true,
-            "funcSelfKind": "NonMutating"
-          },
-          {
-            "kind": "Function",
-            "name": "registerForSKAdAttribution",
-            "printedName": "registerForSKAdAttribution()",
-            "children": [
-              {
-                "kind": "TypeNominal",
-                "name": "Void",
-                "printedName": "()"
-              }
-            ],
-            "declKind": "Func",
-            "usr": "s:12LinkTrailSDK0aB0C26registerForSKAdAttributionyyF",
-            "mangledName": "$s12LinkTrailSDK0aB0C26registerForSKAdAttributionyyF",
-            "moduleName": "LinkTrailSDK",
-            "declAttributes": [
-              "Final",
-              "AccessControl",
-              "RawDocComment"
-            ],
-            "funcSelfKind": "NonMutating"
-          },
-          {
-            "kind": "Function",
-            "name": "updateConversionValue",
-            "printedName": "updateConversionValue(_:coarseValue:)",
-            "children": [
-              {
-                "kind": "TypeNominal",
-                "name": "Void",
-                "printedName": "()"
-              },
-              {
-                "kind": "TypeNominal",
-                "name": "Int",
-                "printedName": "Swift.Int",
-                "usr": "s:Si"
-              },
-              {
-                "kind": "TypeNominal",
-                "name": "Optional",
-                "printedName": "LinkTrailSDK.LinkTrailCoarseConversionValue?",
-                "children": [
-                  {
-                    "kind": "TypeNominal",
-                    "name": "LinkTrailCoarseConversionValue",
-                    "printedName": "LinkTrailSDK.LinkTrailCoarseConversionValue",
-                    "usr": "s:12LinkTrailSDK0aB21CoarseConversionValueO"
-                  }
-                ],
-                "hasDefaultArg": true,
-                "usr": "s:Sq"
-              }
-            ],
-            "declKind": "Func",
-            "usr": "s:12LinkTrailSDK0aB0C21updateConversionValue_06coarseF0ySi_AA0ab6CoarseeF0OSgtF",
-            "mangledName": "$s12LinkTrailSDK0aB0C21updateConversionValue_06coarseF0ySi_AA0ab6CoarseeF0OSgtF",
-            "moduleName": "LinkTrailSDK",
-            "declAttributes": [
-              "Final",
-              "AccessControl",
-              "RawDocComment"
-            ],
             "funcSelfKind": "NonMutating"
           },
           {
@@ -2281,6 +2058,7 @@
               "AccessControl",
               "RawDocComment"
             ],
+            "isFromExtension": true,
             "funcSelfKind": "NonMutating"
           },
           {
@@ -2341,7 +2119,204 @@
               "DiscardableResult",
               "RawDocComment"
             ],
+            "isFromExtension": true,
             "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "trackInstall",
+            "printedName": "trackInstall(force:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "hasDefaultArg": true,
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:12LinkTrailSDK0aB0C12trackInstall5forceySb_tF",
+            "mangledName": "$s12LinkTrailSDK0aB0C12trackInstall5forceySb_tF",
+            "moduleName": "LinkTrailSDK",
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "trackInstall",
+            "printedName": "trackInstall(force:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LinkTrailAttribution",
+                "printedName": "LinkTrailSDK.LinkTrailAttribution",
+                "usr": "s:12LinkTrailSDK0aB11AttributionV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "hasDefaultArg": true,
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:12LinkTrailSDK0aB0C12trackInstall5forceAA0aB11AttributionVSb_tYaKF",
+            "mangledName": "$s12LinkTrailSDK0aB0C12trackInstall5forceAA0aB11AttributionVSb_tYaKF",
+            "moduleName": "LinkTrailSDK",
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "DiscardableResult",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "requestTrackingAuthorization",
+            "printedName": "requestTrackingAuthorization(completion:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(Swift.Bool) -> ()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:12LinkTrailSDK0aB0C28requestTrackingAuthorization10completionyySbc_tF",
+            "mangledName": "$s12LinkTrailSDK0aB0C28requestTrackingAuthorization10completionyySbc_tF",
+            "moduleName": "LinkTrailSDK",
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "requestTrackingAuthorization",
+            "printedName": "requestTrackingAuthorization()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:12LinkTrailSDK0aB0C28requestTrackingAuthorizationSbyYaF",
+            "mangledName": "$s12LinkTrailSDK0aB0C28requestTrackingAuthorizationSbyYaF",
+            "moduleName": "LinkTrailSDK",
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "DiscardableResult",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "registerForSKAdAttribution",
+            "printedName": "registerForSKAdAttribution()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:12LinkTrailSDK0aB0C26registerForSKAdAttributionyyF",
+            "mangledName": "$s12LinkTrailSDK0aB0C26registerForSKAdAttributionyyF",
+            "moduleName": "LinkTrailSDK",
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "updateConversionValue",
+            "printedName": "updateConversionValue(_:coarseValue:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "LinkTrailSDK.LinkTrailCoarseConversionValue?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LinkTrailCoarseConversionValue",
+                    "printedName": "LinkTrailSDK.LinkTrailCoarseConversionValue",
+                    "usr": "s:12LinkTrailSDK0aB21CoarseConversionValueO"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:12LinkTrailSDK0aB0C21updateConversionValue_06coarseF0ySi_AA0ab6CoarseeF0OSgtF",
+            "mangledName": "$s12LinkTrailSDK0aB0C21updateConversionValue_06coarseF0ySi_AA0ab6CoarseeF0OSgtF",
+            "moduleName": "LinkTrailSDK",
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
             "funcSelfKind": "NonMutating"
           },
           {
@@ -5440,51 +5415,51 @@
       "value": "4"
     },
     {
-      "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail.swift",
+      "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail+Install.swift",
       "kind": "BooleanLiteral",
-      "offset": 8585,
+      "offset": 239,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail.swift",
+      "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail+Install.swift",
       "kind": "BooleanLiteral",
-      "offset": 9041,
+      "offset": 695,
       "length": 5,
       "value": "false"
     },
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail.swift",
       "kind": "StringLiteral",
-      "offset": 18333,
+      "offset": 5898,
       "length": 11,
       "value": "\"device_id\""
     },
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail.swift",
       "kind": "StringLiteral",
-      "offset": 18381,
+      "offset": 5946,
       "length": 14,
       "value": "\"io.linktrail\""
     },
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail.swift",
       "kind": "StringLiteral",
-      "offset": 18432,
+      "offset": 5997,
       "length": 17,
       "value": "\"install_tracked\""
     },
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail.swift",
       "kind": "StringLiteral",
-      "offset": 18487,
+      "offset": 6052,
       "length": 18,
       "value": "\"last_attribution\""
     },
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail.swift",
       "kind": "StringLiteral",
-      "offset": 18538,
+      "offset": 6103,
       "length": 13,
       "value": "\"event_queue\""
     },

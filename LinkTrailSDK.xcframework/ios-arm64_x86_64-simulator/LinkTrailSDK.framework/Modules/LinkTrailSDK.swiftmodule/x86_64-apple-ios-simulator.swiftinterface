@@ -45,6 +45,34 @@ public enum LinkTrailLogLevel : Swift.Int, Swift.Sendable, Swift.Comparable {
     get
   }
 }
+extension LinkTrailSDK.LinkTrail {
+  final public func onAttribution(_ callback: @escaping (LinkTrailSDK.LinkTrailAttribution) -> Swift.Void)
+  final public func onLink(_ callback: @escaping (LinkTrailSDK.LinkTrailDeepLink, LinkTrailSDK.LinkTrailLinkSource) -> Swift.Void)
+  final public func onError(_ callback: @escaping (any Swift.Error) -> Swift.Void)
+}
+extension LinkTrailSDK.LinkTrail {
+  @discardableResult
+  final public func handleDeepLink(_ url: Foundation.URL) -> Swift.Bool
+  @discardableResult
+  final public func handleDeepLink(_ url: Foundation.URL) async throws -> LinkTrailSDK.LinkTrailDeepLink
+}
+extension LinkTrailSDK.LinkTrail {
+  final public func trackEvent(name: Swift.String, value: Swift.Double? = nil, currency: Swift.String? = nil)
+  @discardableResult
+  final public func trackEvent(name: Swift.String, value: Swift.Double? = nil, currency: Swift.String? = nil) async throws -> LinkTrailSDK.LinkTrailEventResult
+}
+extension LinkTrailSDK.LinkTrail {
+  final public func trackInstall(force: Swift.Bool = false)
+  @discardableResult
+  final public func trackInstall(force: Swift.Bool = false) async throws -> LinkTrailSDK.LinkTrailAttribution
+}
+extension LinkTrailSDK.LinkTrail {
+  final public func requestTrackingAuthorization(completion: @escaping (Swift.Bool) -> Swift.Void)
+  @discardableResult
+  final public func requestTrackingAuthorization() async -> Swift.Bool
+  final public func registerForSKAdAttribution()
+  final public func updateConversionValue(_ value: Swift.Int, coarseValue: LinkTrailSDK.LinkTrailCoarseConversionValue? = nil)
+}
 @_hasMissingDesignatedInitializers final public class LinkTrail : @unchecked Swift.Sendable {
   public static var shared: LinkTrailSDK.LinkTrail? {
     get
@@ -59,26 +87,6 @@ public enum LinkTrailLogLevel : Swift.Int, Swift.Sendable, Swift.Comparable {
   final public var lastDeepLink: LinkTrailSDK.LinkTrailDeepLink? {
     get
   }
-  final public func onAttribution(_ callback: @escaping (LinkTrailSDK.LinkTrailAttribution) -> Swift.Void)
-  final public func onDeferredDeepLink(_ callback: @escaping (LinkTrailSDK.LinkTrailDeepLink) -> Swift.Void)
-  final public func onDeepLink(_ callback: @escaping (LinkTrailSDK.LinkTrailDeepLink) -> Swift.Void)
-  final public func onLink(_ callback: @escaping (LinkTrailSDK.LinkTrailDeepLink, LinkTrailSDK.LinkTrailLinkSource) -> Swift.Void)
-  final public func onError(_ callback: @escaping (any Swift.Error) -> Swift.Void)
-  final public func trackInstall(force: Swift.Bool = false)
-  @discardableResult
-  final public func trackInstall(force: Swift.Bool = false) async throws -> LinkTrailSDK.LinkTrailAttribution
-  final public func requestTrackingAuthorization(completion: @escaping (Swift.Bool) -> Swift.Void)
-  @discardableResult
-  final public func requestTrackingAuthorization() async -> Swift.Bool
-  @discardableResult
-  final public func handleDeepLink(_ url: Foundation.URL) -> Swift.Bool
-  @discardableResult
-  final public func handleDeepLink(_ url: Foundation.URL) async throws -> LinkTrailSDK.LinkTrailDeepLink
-  final public func registerForSKAdAttribution()
-  final public func updateConversionValue(_ value: Swift.Int, coarseValue: LinkTrailSDK.LinkTrailCoarseConversionValue? = nil)
-  final public func trackEvent(name: Swift.String, value: Swift.Double? = nil, currency: Swift.String? = nil)
-  @discardableResult
-  final public func trackEvent(name: Swift.String, value: Swift.Double? = nil, currency: Swift.String? = nil) async throws -> LinkTrailSDK.LinkTrailEventResult
   @objc deinit
 }
 extension LinkTrailSDK.LinkTrail {
