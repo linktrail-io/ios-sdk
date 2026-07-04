@@ -492,99 +492,6 @@
         "children": [
           {
             "kind": "Var",
-            "name": "defaultBaseURL",
-            "printedName": "defaultBaseURL",
-            "children": [
-              {
-                "kind": "TypeNominal",
-                "name": "String",
-                "printedName": "Swift.String",
-                "usr": "s:SS"
-              }
-            ],
-            "declKind": "Var",
-            "usr": "s:12LinkTrailSDK0aB7OptionsV14defaultBaseURLSSvpZ",
-            "mangledName": "$s12LinkTrailSDK0aB7OptionsV14defaultBaseURLSSvpZ",
-            "moduleName": "LinkTrailSDK",
-            "static": true,
-            "declAttributes": [
-              "HasInitialValue",
-              "HasStorage",
-              "AccessControl",
-              "RawDocComment"
-            ],
-            "isLet": true,
-            "hasStorage": true,
-            "accessors": [
-              {
-                "kind": "Accessor",
-                "name": "Get",
-                "printedName": "Get()",
-                "children": [
-                  {
-                    "kind": "TypeNominal",
-                    "name": "String",
-                    "printedName": "Swift.String",
-                    "usr": "s:SS"
-                  }
-                ],
-                "declKind": "Accessor",
-                "usr": "s:12LinkTrailSDK0aB7OptionsV14defaultBaseURLSSvgZ",
-                "mangledName": "$s12LinkTrailSDK0aB7OptionsV14defaultBaseURLSSvgZ",
-                "moduleName": "LinkTrailSDK",
-                "static": true,
-                "implicit": true,
-                "accessorKind": "get"
-              }
-            ]
-          },
-          {
-            "kind": "Var",
-            "name": "baseURL",
-            "printedName": "baseURL",
-            "children": [
-              {
-                "kind": "TypeNominal",
-                "name": "String",
-                "printedName": "Swift.String",
-                "usr": "s:SS"
-              }
-            ],
-            "declKind": "Var",
-            "usr": "s:12LinkTrailSDK0aB7OptionsV7baseURLSSvp",
-            "mangledName": "$s12LinkTrailSDK0aB7OptionsV7baseURLSSvp",
-            "moduleName": "LinkTrailSDK",
-            "declAttributes": [
-              "HasStorage",
-              "AccessControl",
-              "RawDocComment"
-            ],
-            "isLet": true,
-            "hasStorage": true,
-            "accessors": [
-              {
-                "kind": "Accessor",
-                "name": "Get",
-                "printedName": "Get()",
-                "children": [
-                  {
-                    "kind": "TypeNominal",
-                    "name": "String",
-                    "printedName": "Swift.String",
-                    "usr": "s:SS"
-                  }
-                ],
-                "declKind": "Accessor",
-                "usr": "s:12LinkTrailSDK0aB7OptionsV7baseURLSSvg",
-                "mangledName": "$s12LinkTrailSDK0aB7OptionsV7baseURLSSvg",
-                "moduleName": "LinkTrailSDK",
-                "implicit": true,
-                "accessorKind": "get"
-              }
-            ]
-          },
-          {
-            "kind": "Var",
             "name": "logEnabled",
             "printedName": "logEnabled",
             "children": [
@@ -872,20 +779,13 @@
           {
             "kind": "Constructor",
             "name": "init",
-            "printedName": "init(baseURL:logEnabled:logLevel:requestTimeout:retryPolicy:linkDomains:autoTrackInstall:)",
+            "printedName": "init(logEnabled:logLevel:requestTimeout:retryPolicy:linkDomains:autoTrackInstall:)",
             "children": [
               {
                 "kind": "TypeNominal",
                 "name": "LinkTrailOptions",
                 "printedName": "LinkTrailSDK.LinkTrailOptions",
                 "usr": "s:12LinkTrailSDK0aB7OptionsV"
-              },
-              {
-                "kind": "TypeNominal",
-                "name": "String",
-                "printedName": "Swift.String",
-                "hasDefaultArg": true,
-                "usr": "s:SS"
               },
               {
                 "kind": "TypeNominal",
@@ -939,8 +839,8 @@
               }
             ],
             "declKind": "Constructor",
-            "usr": "s:12LinkTrailSDK0aB7OptionsV7baseURL10logEnabled0G5Level14requestTimeout11retryPolicy11linkDomains16autoTrackInstallACSS_SbAA0ab3LogI0OSdAA0ab5RetryM0VSaySSGSbtcfc",
-            "mangledName": "$s12LinkTrailSDK0aB7OptionsV7baseURL10logEnabled0G5Level14requestTimeout11retryPolicy11linkDomains16autoTrackInstallACSS_SbAA0ab3LogI0OSdAA0ab5RetryM0VSaySSGSbtcfc",
+            "usr": "s:12LinkTrailSDK0aB7OptionsV10logEnabled0E5Level14requestTimeout11retryPolicy11linkDomains16autoTrackInstallACSb_AA0ab3LogG0OSdAA0ab5RetryK0VSaySSGSbtcfc",
+            "mangledName": "$s12LinkTrailSDK0aB7OptionsV10logEnabled0E5Level14requestTimeout11retryPolicy11linkDomains16autoTrackInstallACSb_AA0ab3LogG0OSdAA0ab5RetryK0VSaySSGSbtcfc",
             "moduleName": "LinkTrailSDK",
             "declAttributes": [
               "AccessControl"
@@ -4436,6 +4336,13 @@
         "moduleName": "LinkTrailSDK"
       },
       {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LinkTrailSDK"
+      },
+      {
         "kind": "TypeDecl",
         "name": "LinkTrailError",
         "printedName": "LinkTrailError",
@@ -5346,36 +5253,29 @@
     },
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/Configuration\/LinkTrailOptions.swift",
-      "kind": "StringLiteral",
-      "offset": 1152,
-      "length": 40,
-      "value": "\"https:\/\/linktrail-backend.onrender.com\""
-    },
-    {
-      "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/Configuration\/LinkTrailOptions.swift",
       "kind": "BooleanLiteral",
-      "offset": 2468,
+      "offset": 2192,
       "length": 5,
       "value": "false"
     },
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/Configuration\/LinkTrailOptions.swift",
       "kind": "IntegerLiteral",
-      "offset": 2559,
+      "offset": 2283,
       "length": 2,
       "value": "15"
     },
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/Configuration\/LinkTrailOptions.swift",
       "kind": "Array",
-      "offset": 2649,
+      "offset": 2373,
       "length": 2,
       "value": "[]"
     },
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/Configuration\/LinkTrailOptions.swift",
       "kind": "BooleanLiteral",
-      "offset": 2686,
+      "offset": 2410,
       "length": 4,
       "value": "true"
     },
@@ -5431,35 +5331,35 @@
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail.swift",
       "kind": "StringLiteral",
-      "offset": 5898,
+      "offset": 5916,
       "length": 11,
       "value": "\"device_id\""
     },
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail.swift",
       "kind": "StringLiteral",
-      "offset": 5946,
+      "offset": 5964,
       "length": 14,
       "value": "\"io.linktrail\""
     },
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail.swift",
       "kind": "StringLiteral",
-      "offset": 5997,
+      "offset": 6015,
       "length": 17,
       "value": "\"install_tracked\""
     },
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail.swift",
       "kind": "StringLiteral",
-      "offset": 6052,
+      "offset": 6070,
       "length": 18,
       "value": "\"last_attribution\""
     },
     {
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/LinkTrail.swift",
       "kind": "StringLiteral",
-      "offset": 6103,
+      "offset": 6121,
       "length": 13,
       "value": "\"event_queue\""
     },
@@ -5469,6 +5369,13 @@
       "offset": 683,
       "length": 3,
       "value": "100"
+    },
+    {
+      "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/Networking\/LinkTrailBackend.swift",
+      "kind": "StringLiteral",
+      "offset": 324,
+      "length": 40,
+      "value": "\"https:\/\/linktrail-backend.onrender.com\""
     }
   ]
 }

@@ -22,15 +22,13 @@ public struct LinkTrailRetryPolicy : Swift.Sendable {
   public static let disabled: LinkTrailSDK.LinkTrailRetryPolicy
 }
 public struct LinkTrailOptions : Swift.Sendable {
-  public static let defaultBaseURL: Swift.String
-  public let baseURL: Swift.String
   public let logEnabled: Swift.Bool
   public let logLevel: LinkTrailSDK.LinkTrailLogLevel
   public let requestTimeout: Foundation.TimeInterval
   public let retryPolicy: LinkTrailSDK.LinkTrailRetryPolicy
   public let linkDomains: [Swift.String]
   public let autoTrackInstall: Swift.Bool
-  public init(baseURL: Swift.String = LinkTrailOptions.defaultBaseURL, logEnabled: Swift.Bool = false, logLevel: LinkTrailSDK.LinkTrailLogLevel = .info, requestTimeout: Foundation.TimeInterval = 15, retryPolicy: LinkTrailSDK.LinkTrailRetryPolicy = .default, linkDomains: [Swift.String] = [], autoTrackInstall: Swift.Bool = true)
+  public init(logEnabled: Swift.Bool = false, logLevel: LinkTrailSDK.LinkTrailLogLevel = .info, requestTimeout: Foundation.TimeInterval = 15, retryPolicy: LinkTrailSDK.LinkTrailRetryPolicy = .default, linkDomains: [Swift.String] = [], autoTrackInstall: Swift.Bool = true)
 }
 public enum LinkTrailLogLevel : Swift.Int, Swift.Sendable, Swift.Comparable {
   case debug
