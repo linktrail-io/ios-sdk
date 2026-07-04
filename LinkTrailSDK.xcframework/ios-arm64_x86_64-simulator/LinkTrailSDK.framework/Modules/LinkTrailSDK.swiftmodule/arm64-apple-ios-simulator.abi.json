@@ -5374,8 +5374,8 @@
       "filePath": "\/Volumes\/Data\/Repos\/linktrail\/iOS-SDK\/Sources\/LinkTrailSDK\/Networking\/LinkTrailBackend.swift",
       "kind": "StringLiteral",
       "offset": 324,
-      "length": 40,
-      "value": "\"https:\/\/linktrail-backend.onrender.com\""
+      "length": 30,
+      "value": "\"https:\/\/backend.linktrail.io\""
     }
   ]
 }
