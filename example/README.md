@@ -8,14 +8,29 @@ where a user lands after installing. It consumes the SDK's **binary package** at
 
 Requires Xcode 15+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
 
+### 1. Add your API key
+
+Open [`KickFlipDemo/SDK/AttributionCoordinator.swift`](KickFlipDemo/SDK/AttributionCoordinator.swift)
+and replace the placeholder on the `apiKey` line with your workspace SDK key (`lt_live_…`, from
+the LinkTrail dashboard):
+
+```swift
+// KickFlipDemo/SDK/AttributionCoordinator.swift
+private static let apiKey = "lt_live_REPLACE_WITH_YOUR_KEY"   // ← paste your key here
+```
+
+Without a valid key the backend returns `401`, surfaced via `onError` (you'll see a console
+warning). The deep-link **simulator still works without a key** — it fabricates links locally —
+so you can explore the UI first and add the key only when you want the real install/open calls
+to authenticate.
+
+### 2. Generate and run
+
 ```bash
 cd example
 xcodegen generate            # builds KickFlipDemo.xcodeproj from project.yml
 open KickFlipDemo.xcodeproj  # run on any iOS 16+ simulator
 ```
-
-Set your workspace key in [`AttributionCoordinator.swift`](KickFlipDemo/SDK/AttributionCoordinator.swift)
-(the `apiKey` constant).
 
 ## The app
 
