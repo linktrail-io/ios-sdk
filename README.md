@@ -10,7 +10,7 @@ In Xcode: **File → Add Package Dependencies…** → paste this repo's URL →
 Or in a `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/linktrail-io/ios-sdk.git", from: "0.0.1")
+.package(url: "https://github.com/linktrail-io/ios-sdk.git", from: "0.0.8")
 ```
 
 Requires iOS 15+.
@@ -18,7 +18,7 @@ Requires iOS 15+.
 ## Install (CocoaPods)
 
 ```ruby
-pod 'LinkTrailSDK', :git => 'https://github.com/linktrail-io/ios-sdk.git', :tag => '0.0.8'
+pod 'LinkTrailSDK', '~> 0.0.8'
 ```
 
 Then run `pod install` and open the generated `.xcworkspace`.
