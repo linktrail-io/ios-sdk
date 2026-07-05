@@ -3,16 +3,17 @@
 <plist version="1.0">
 <dict>
     <!--
-      LinkTrail performs attribution tracking: it collects a device identifier (and the
-      IDFA when ATT is authorized) and links them to the user for advertising/analytics.
-      Review NSPrivacyTracking / collected data types whenever the SDK's data use changes.
+      LinkTrail performs first-party install attribution: it collects a per-install device
+      identifier (IDFV, with a persisted UUID fallback) and links it to the user for attribution
+      and analytics of the app's OWN installs. It does NOT collect the IDFA and does NOT track
+      users across apps or websites owned by other companies, so NSPrivacyTracking is false and
+      the backend is not an ATT tracking domain (it must remain reachable without ATT).
+      Re-review this file if the SDK ever collects the IDFA or links data with third parties.
     -->
     <key>NSPrivacyTracking</key>
-    <true/>
+    <false/>
     <key>NSPrivacyTrackingDomains</key>
-    <array>
-        <string>pre-production.linktrail.io</string>
-    </array>
+    <array/>
     <key>NSPrivacyCollectedDataTypes</key>
     <array>
         <dict>
@@ -21,11 +22,11 @@
             <key>NSPrivacyCollectedDataTypeLinked</key>
             <true/>
             <key>NSPrivacyCollectedDataTypeTracking</key>
-            <true/>
+            <false/>
             <key>NSPrivacyCollectedDataTypePurposes</key>
             <array>
-                <string>NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising</string>
                 <string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
             </array>
         </dict>
     </array>
