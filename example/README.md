@@ -1,4 +1,4 @@
-# KickFlip — LinkTrail Demo App
+# KickFlip — LinkTrail iOS demo
 
 A small SwiftUI storefront that shows how the **LinkTrail** SDK's deferred deep linking drives
 where a user lands after installing. It consumes the SDK's **binary package** at the repo root
@@ -24,7 +24,7 @@ warning). The deep-link **simulator still works without a key** — it fabricate
 so you can explore the UI first and add the key only when you want the real install/open calls
 to authenticate.
 
-### 2. Generate and run
+### 2. Build and run
 
 ```bash
 cd example
@@ -72,7 +72,7 @@ LinkTrail.shared?.onLink { [store] link, source in
 | `registerForSKAdAttribution()` on launch | [`AttributionCoordinator`](KickFlipDemo/SDK/AttributionCoordinator.swift) |
 | `handleDeepLink(_:)` for the already-installed path | [`AttributionCoordinator`](KickFlipDemo/SDK/AttributionCoordinator.swift), forwarded from `onOpenURL` |
 
-## Test re-engagement from the terminal
+## Test from the terminal
 
 While the app is installed, the custom scheme routes the same way:
 
