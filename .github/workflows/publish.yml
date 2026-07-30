@@ -1,0 +1,79 @@
+name: Publish
+
+# Runs when a release PR (framework + bumped podspec) is merged into main. Publishes:
+#   1. Swift Package Manager -> git tag <version>  (Package.swift is a path binaryTarget, so the
+#      tag IS the SPM release).
+#   2. CocoaPods             -> pod trunk push.
+# Idempotent: tags/publishes only what's new.
+#
+# SECRET (this repo): COCOAPODS_TRUNK_TOKEN (from `pod trunk register`, ~/.netrc password).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'LinkTrailSDK.podspec'
+      - 'LinkTrailSDK.xcframework/**'
+  workflow_dispatch: {}
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+permissions:
+  contents: write            # push the git tag with the default GITHUB_TOKEN
+
+env:
+  LANG: en_US.UTF-8
+  LC_ALL: en_US.UTF-8
+
+jobs:
+  publish:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # need existing tags
+
+      - name: Read podspec version
+        id: ver
+        run: |
+          v="$(grep -E "s\.version[[:space:]]*=" LinkTrailSDK.podspec | head -1 | sed -E "s/.*'([^']+)'.*/\1/")"
+          if [ -z "$v" ]; then echo "::error::Could not read s.version from LinkTrailSDK.podspec"; exit 1; fi
+          echo "v=$v" >> "$GITHUB_OUTPUT"
+          echo "Version: $v"
+
+      - name: Tag the release (SPM)
+        env:
+          V: ${{ steps.ver.outputs.v }}
+        run: |
+          set -euo pipefail
+          if git rev-parse "refs/tags/$V" >/dev/null 2>&1; then
+            echo "::notice::Tag $V already exists — SPM release is already live."
+          else
+            git config user.name  "Ahsan Ali"
+            git config user.email "iranaahsanali@gmail.com"
+            git tag -a "$V" -m "LinkTrail iOS SDK $V"
+            git push origin "$V"
+            echo "::notice::Published SPM tag $V"
+          fi
+
+      - name: Publish to CocoaPods trunk
+        env:
+          V: ${{ steps.ver.outputs.v }}
+          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+        run: |
+          set -euo pipefail
+          export PATH="/opt/homebrew/bin:$PATH"   # self-hosted mac: pod is a Homebrew binary, not on CI's default PATH
+          if [ -z "${COCOAPODS_TRUNK_TOKEN:-}" ]; then
+            echo "::error::COCOAPODS_TRUNK_TOKEN not set — add it in repo Settings → Secrets → Actions."
+            exit 1
+          fi
+          pod --version
+          if pod trunk info LinkTrailSDK 2>/dev/null | grep -qE "^[[:space:]]*-[[:space:]]*$V$"; then
+            echo "::notice::CocoaPods LinkTrailSDK $V already published — skipping."
+            exit 0
+          fi
+          pod trunk push LinkTrailSDK.podspec --allow-warnings --skip-import-validation
+          echo "::notice::Published CocoaPods pod LinkTrailSDK $V"
