@@ -6,19 +6,19 @@
 	<dict>
 		<key>Info.plist</key>
 		<data>
-		z5ewEykHNTYmoie3cK3hSMcKnzk=
+		jylEsdheJH8k7ZwRUtXHhRTLAtU=
 		</data>
 		<key>Modules/LinkTrailSDK.swiftmodule/arm64-apple-ios-simulator.swiftinterface</key>
 		<data>
-		Y9FvzkMkgI5jjqnYPtqkiPT4OW4=
+		CnB9+1v4dExBri6GSS2GgI6ySGA=
 		</data>
 		<key>Modules/LinkTrailSDK.swiftmodule/x86_64-apple-ios-simulator.swiftinterface</key>
 		<data>
-		Dz27lOhkhxiy3q+aoC19/7HslkU=
+		eR3Els4zYChdg/wPkCSH4S0WoIQ=
 		</data>
 		<key>PrivacyInfo.xcprivacy</key>
 		<data>
-		VQRf5LX+/3abLnsLROoU9USRV1I=
+		dor6nXtplte6HFvhWwDmHIu/zj0=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -27,21 +27,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			g2EzV9kRhSJpVMorGv6G0x+blGhfqIAzQdBM0/Ukmz8=
+			sgFDwgn3hjc1IVqBgkFZBHwhsDh033zV8Ql981m0KWw=
 			</data>
 		</dict>
 		<key>Modules/LinkTrailSDK.swiftmodule/x86_64-apple-ios-simulator.swiftinterface</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			XGOWF9GIcxTZ+SKPN0k1ueFqnhsXaUgZGVfp7XUiB9I=
+			sCwWfzw34BY0sCEUC7HFPsnka4cnXqjq6AjBHSr1jJA=
 			</data>
 		</dict>
 		<key>PrivacyInfo.xcprivacy</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			WmMeEd74nf+6FooRhhpW2CO46F+4MNa5KlIO0MczBdw=
+			CkwoFG3Ab2W9cg0IsnBSLkbvNNP/4fIBR9uv+FnzTqw=
 			</data>
 		</dict>
 	</dict>
