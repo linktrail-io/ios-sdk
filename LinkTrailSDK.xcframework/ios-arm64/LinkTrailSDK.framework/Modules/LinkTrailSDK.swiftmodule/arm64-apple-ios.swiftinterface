@@ -22,6 +22,15 @@ public struct LinkTrailRetryPolicy : Swift.Sendable {
   public static let `default`: LinkTrailSDK.LinkTrailRetryPolicy
   public static let disabled: LinkTrailSDK.LinkTrailRetryPolicy
 }
+public enum LinkTrailClickTokenSource : Swift.Sendable {
+  case pasteButton
+  case automatic
+  public static func == (a: LinkTrailSDK.LinkTrailClickTokenSource, b: LinkTrailSDK.LinkTrailClickTokenSource) -> Swift.Bool
+  public func hash(into hasher: inout Swift.Hasher)
+  public var hashValue: Swift.Int {
+    get
+  }
+}
 public struct LinkTrailOptions : Swift.Sendable {
   public let logEnabled: Swift.Bool
   public let logLevel: LinkTrailSDK.LinkTrailLogLevel
@@ -29,9 +38,9 @@ public struct LinkTrailOptions : Swift.Sendable {
   public let retryPolicy: LinkTrailSDK.LinkTrailRetryPolicy
   public let linkDomains: [Swift.String]
   public let autoTrackInstall: Swift.Bool
-  public let readClipboardOnInstall: Swift.Bool
+  public let clickTokenSource: LinkTrailSDK.LinkTrailClickTokenSource
   public let requireConsent: Swift.Bool
-  public init(logEnabled: Swift.Bool = false, logLevel: LinkTrailSDK.LinkTrailLogLevel = .info, requestTimeout: Foundation.TimeInterval = 15, retryPolicy: LinkTrailSDK.LinkTrailRetryPolicy = .default, linkDomains: [Swift.String] = [], autoTrackInstall: Swift.Bool = true, readClipboardOnInstall: Swift.Bool = false, requireConsent: Swift.Bool = true)
+  public init(logEnabled: Swift.Bool = false, logLevel: LinkTrailSDK.LinkTrailLogLevel = .info, requestTimeout: Foundation.TimeInterval = 15, retryPolicy: LinkTrailSDK.LinkTrailRetryPolicy = .default, linkDomains: [Swift.String] = [], autoTrackInstall: Swift.Bool = true, clickTokenSource: LinkTrailSDK.LinkTrailClickTokenSource = .pasteButton, requireConsent: Swift.Bool = true)
 }
 public enum LinkTrailLogLevel : Swift.Int, Swift.Sendable, Swift.Comparable {
   case debug
@@ -188,6 +197,8 @@ public enum LinkTrailCoarseConversionValue : Swift.String, Swift.Sendable {
   @available(iOS 16.0, *)
   public typealias UIViewType = UIKit.UIPasteControl
 }
+extension LinkTrailSDK.LinkTrailClickTokenSource : Swift.Equatable {}
+extension LinkTrailSDK.LinkTrailClickTokenSource : Swift.Hashable {}
 extension LinkTrailSDK.LinkTrailLogLevel : Swift.Hashable {}
 extension LinkTrailSDK.LinkTrailLogLevel : Swift.RawRepresentable {}
 extension LinkTrailSDK.LinkTrailLinkSource : Swift.Hashable {}
