@@ -3,12 +3,13 @@
 <plist version="1.0">
 <dict>
     <!--
-      LinkTrail performs first-party install attribution: it collects a per-install device
-      identifier (IDFV, with a persisted UUID fallback) and links it to the user for attribution
-      and analytics of the app's OWN installs. It does NOT collect the IDFA and does NOT track
-      users across apps or websites owned by other companies, so NSPrivacyTracking is false and
-      the backend is not an ATT tracking domain (it must remain reachable without ATT).
-      Re-review this file if the SDK ever collects the IDFA or links data with third parties.
+      LinkTrail performs first-party install attribution: it collects an app-scoped, per-install
+      device identifier (a random UUID stored in UserDefaults that resets on uninstall) and links
+      it to the user for attribution and analytics of the app's OWN installs. It reads NO system
+      identifier — neither the IDFA nor the IDFV — and does NOT track users across apps or websites
+      owned by other companies, so NSPrivacyTracking is false and the backend is not an ATT tracking
+      domain (it must remain reachable without ATT). Re-review this file if the SDK ever collects a
+      system/advertising identifier or links data with third parties.
     -->
     <key>NSPrivacyTracking</key>
     <false/>

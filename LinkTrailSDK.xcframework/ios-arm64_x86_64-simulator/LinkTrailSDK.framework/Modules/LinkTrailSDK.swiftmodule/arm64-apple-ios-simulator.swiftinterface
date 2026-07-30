@@ -1,6 +1,6 @@
 // swift-interface-format-version: 1.0
 // swift-compiler-version: Apple Swift version 6.3.3 effective-5.10 (swiftlang-6.3.3.1.3 clang-2100.1.1.101)
-// swift-module-flags: -target arm64-apple-ios15.0-simulator -enable-objc-interop -enable-library-evolution -swift-version 5 -O -enable-experimental-feature DebugDescriptionMacro -module-name LinkTrailSDK -package-name ios_sdk
+// swift-module-flags: -target arm64-apple-ios15.0-simulator -enable-objc-interop -enable-library-evolution -swift-version 5 -O -enable-experimental-feature DebugDescriptionMacro -module-name LinkTrailSDK -package-name linktrail_ios_sdk_source
 // swift-module-flags-ignorable:  -formal-cxx-interoperability-mode=off -interface-compiler-version 6.3.3
 import AppTrackingTransparency
 import Foundation
@@ -9,6 +9,7 @@ import Foundation/*.ProcessInfo*/
 import Foundation/*.URL*/
 import StoreKit
 import Swift
+import SwiftUI
 import UIKit
 import _Concurrency
 import _StringProcessing
@@ -28,7 +29,9 @@ public struct LinkTrailOptions : Swift.Sendable {
   public let retryPolicy: LinkTrailSDK.LinkTrailRetryPolicy
   public let linkDomains: [Swift.String]
   public let autoTrackInstall: Swift.Bool
-  public init(logEnabled: Swift.Bool = false, logLevel: LinkTrailSDK.LinkTrailLogLevel = .info, requestTimeout: Foundation.TimeInterval = 15, retryPolicy: LinkTrailSDK.LinkTrailRetryPolicy = .default, linkDomains: [Swift.String] = [], autoTrackInstall: Swift.Bool = true)
+  public let readClipboardOnInstall: Swift.Bool
+  public let requireConsent: Swift.Bool
+  public init(logEnabled: Swift.Bool = false, logLevel: LinkTrailSDK.LinkTrailLogLevel = .info, requestTimeout: Foundation.TimeInterval = 15, retryPolicy: LinkTrailSDK.LinkTrailRetryPolicy = .default, linkDomains: [Swift.String] = [], autoTrackInstall: Swift.Bool = true, readClipboardOnInstall: Swift.Bool = false, requireConsent: Swift.Bool = true)
 }
 public enum LinkTrailLogLevel : Swift.Int, Swift.Sendable, Swift.Comparable {
   case debug
@@ -49,6 +52,9 @@ extension LinkTrailSDK.LinkTrail {
   final public func onError(_ callback: @escaping (any Swift.Error) -> Swift.Void)
 }
 extension LinkTrailSDK.LinkTrail {
+  final public func setConsent(_ granted: Swift.Bool)
+}
+extension LinkTrailSDK.LinkTrail {
   @discardableResult
   final public func handleDeepLink(_ url: Foundation.URL) -> Swift.Bool
   @discardableResult
@@ -61,8 +67,11 @@ extension LinkTrailSDK.LinkTrail {
 }
 extension LinkTrailSDK.LinkTrail {
   final public func trackInstall(force: Swift.Bool = false)
+  final public func trackInstall(clickToken pastedString: Swift.String, force: Swift.Bool = false)
   @discardableResult
   final public func trackInstall(force: Swift.Bool = false) async throws -> LinkTrailSDK.LinkTrailAttribution
+  @discardableResult
+  final public func trackInstall(clickToken pastedString: Swift.String, force: Swift.Bool = false) async throws -> LinkTrailSDK.LinkTrailAttribution
 }
 extension LinkTrailSDK.LinkTrail {
   final public func requestTrackingAuthorization(completion: @escaping (Swift.Bool) -> Swift.Void)
@@ -164,9 +173,26 @@ public enum LinkTrailCoarseConversionValue : Swift.String, Swift.Sendable {
     get
   }
 }
+@available(iOS 16.0, *)
+@_Concurrency.MainActor @preconcurrency public struct LinkTrailPasteButton : SwiftUI.UIViewRepresentable {
+  @_Concurrency.MainActor @preconcurrency public init(onToken: ((Swift.String) -> Swift.Void)? = nil)
+  @_Concurrency.MainActor @preconcurrency public func makeUIView(context: LinkTrailSDK.LinkTrailPasteButton.Context) -> UIKit.UIPasteControl
+  @_Concurrency.MainActor @preconcurrency public func updateUIView(_ uiView: UIKit.UIPasteControl, context: LinkTrailSDK.LinkTrailPasteButton.Context)
+  @_Concurrency.MainActor @preconcurrency public func makeCoordinator() -> LinkTrailSDK.LinkTrailPasteButton.Coordinator
+  @objc @_hasMissingDesignatedInitializers @_Concurrency.MainActor @preconcurrency final public class Coordinator : UIKit.UIResponder {
+    @_Concurrency.MainActor @preconcurrency @objc override final public func paste(itemProviders: [Foundation.NSItemProvider])
+    @objc deinit
+  }
+  @available(iOS 16.0, *)
+  public typealias Body = Swift.Never
+  @available(iOS 16.0, *)
+  public typealias UIViewType = UIKit.UIPasteControl
+}
 extension LinkTrailSDK.LinkTrailLogLevel : Swift.Hashable {}
 extension LinkTrailSDK.LinkTrailLogLevel : Swift.RawRepresentable {}
 extension LinkTrailSDK.LinkTrailLinkSource : Swift.Hashable {}
 extension LinkTrailSDK.LinkTrailCoarseConversionValue : Swift.Equatable {}
 extension LinkTrailSDK.LinkTrailCoarseConversionValue : Swift.Hashable {}
 extension LinkTrailSDK.LinkTrailCoarseConversionValue : Swift.RawRepresentable {}
+@available(iOS 16.0, *)
+extension LinkTrailSDK.LinkTrailPasteButton : Swift.Sendable {}
