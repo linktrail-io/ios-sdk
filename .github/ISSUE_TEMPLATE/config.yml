@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Setup & troubleshooting
+    url: https://github.com/linktrail-io/ios-sdk/blob/main/README.md
+    about: Universal Links or deferred deep linking not working? The README's setup notes often have the fix first.
