@@ -14,13 +14,13 @@ In Xcode: **File → Add Package Dependencies…** → paste this repo's URL →
 `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/linktrail-io/ios-sdk.git", from: "0.0.8")
+.package(url: "https://github.com/linktrail-io/ios-sdk.git", from: "0.0.10")
 ```
 
 ### CocoaPods
 
 ```ruby
-pod 'LinkTrailSDK', '~> 0.0.8'
+pod 'LinkTrailSDK', '~> 0.0.10'
 ```
 
 Then run `pod install` and open the generated `.xcworkspace`.
