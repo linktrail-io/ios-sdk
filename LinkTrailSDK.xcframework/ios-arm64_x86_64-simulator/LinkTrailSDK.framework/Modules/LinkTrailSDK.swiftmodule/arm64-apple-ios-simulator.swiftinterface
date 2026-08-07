@@ -25,6 +25,7 @@ public struct LinkTrailRetryPolicy : Swift.Sendable {
 public enum LinkTrailClickTokenSource : Swift.Sendable {
   case pasteButton
   case automatic
+  case none
   public static func == (a: LinkTrailSDK.LinkTrailClickTokenSource, b: LinkTrailSDK.LinkTrailClickTokenSource) -> Swift.Bool
   public func hash(into hasher: inout Swift.Hasher)
   public var hashValue: Swift.Int {
