@@ -14,13 +14,13 @@ In Xcode: **File → Add Package Dependencies…** → paste this repo's URL →
 `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/linktrail-io/ios-sdk.git", from: "0.0.10")
+.package(url: "https://github.com/linktrail-io/ios-sdk.git", from: "0.0.11")
 ```
 
 ### CocoaPods
 
 ```ruby
-pod 'LinkTrailSDK', '~> 0.0.10'
+pod 'LinkTrailSDK', '~> 0.0.11'
 ```
 
 Then run `pod install` and open the generated `.xcworkspace`.
@@ -73,6 +73,42 @@ LinkTrail.shared?.updateConversionValue(42, coarseValue: .medium)
 
 `LinkTrailOptions` also takes `logEnabled`, `logLevel`, `requestTimeout`, `retryPolicy`, and
 `linkDomains`.
+
+## Deferred attribution — how the click token is read
+
+iOS has no install referrer, so a deterministic install match depends on a `lt_click` token the web
+interstitial leaves on the clipboard. `clickTokenSource` decides how (or whether) the SDK reads it:
+
+```swift
+LinkTrailOptions(clickTokenSource: .pasteButton)   // default
+```
+
+- **`.pasteButton`** (default, **no alert**) — your app places a `LinkTrailPasteButton` (Apple's
+  `UIPasteControl`); the user's tap *is* the consent, so iOS shows no "Allow Paste" alert. Pair it
+  with `autoTrackInstall: false` so the install waits for the tap.
+
+  ```swift
+  if #available(iOS 16.0, *) {
+      LinkTrailPasteButton()   // reads the token on tap → trackInstall(clickToken:)
+  }
+  ```
+
+- **`.automatic`** (**shows the alert**) — the SDK reads the clipboard itself at install. Nothing to
+  add to your UI, but iOS shows the system **"Allow Paste"** alert on first launch.
+
+- **`.none`** (**never touches the clipboard**) — no token, no alert, nothing to add to your UI;
+  attribution is purely probabilistic. Use it when your links don't stage a token (no web
+  interstitial), or when you'd rather not ask for clipboard access at all. The guarantee holds
+  however the SDK is called: under `.none`, `trackInstall(clickToken:)` ignores the token it's
+  handed, so a stray paste button can't quietly re-enable clipboard reads.
+
+If there's no token, attribution falls back to the probabilistic IP path. You can also hand a pasted
+string in yourself with `trackInstall(clickToken:)`.
+
+> **Probabilistic matching is lossy.** It misses on shared IPs (offices, CGNAT, public wifi), VPNs,
+> and the common case of clicking on cellular then installing on wifi — and it can occasionally match
+> the *wrong* user, so treat deferred link content as best-effort personalization. Only a click token
+> gives a deterministic, IP-independent match.
 
 ## Deep-link setup
 
