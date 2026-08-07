@@ -31,6 +31,10 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>LinkTrailApiKey</key>
+	<string>$(LINKTRAIL_API_KEY)</string>
+	<key>LinkTrailTokenSource</key>
+	<string>$(LINKTRAIL_TOKEN_SOURCE)</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>KickFlip uses this to attribute your install to the campaign you came from and personalize your first experience.</string>
 	<key>UILaunchScreen</key>

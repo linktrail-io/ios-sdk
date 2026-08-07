@@ -31,8 +31,27 @@ private struct RootView: View {
     @EnvironmentObject private var store: Store
     @State private var showSimulator = false
     @State private var pendingScenario: AttributionCoordinator.Scenario?
+    /// `.pasteButton` builds open on the paste consent gate (the user's paste tap replaces the iOS
+    /// "Allow Paste" alert). `.automatic` builds go straight to the storefront.
+    @State private var showConsentGate = AttributionCoordinator.usesPasteButton
+    /// `.none` builds open on the tracking-consent screen: there's no token to paste, and without an
+    /// explicit answer the deny-by-default gate would send every install as `consent: false`.
+    @State private var showTrackingConsent = AttributionCoordinator.usesTrackingConsentScreen
 
     var body: some View {
+        if showTrackingConsent {
+            TrackingConsentView { granted in
+                coordinator.answerTrackingConsent(granted: granted)
+                showTrackingConsent = false
+            }
+        } else if showConsentGate {
+            ConsentGateView { showConsentGate = false }
+        } else {
+            storefront
+        }
+    }
+
+    private var storefront: some View {
         NavigationStack(path: $store.path) {
             HomeView()
                 .navigationDestination(for: Product.self) { product in
@@ -45,6 +64,7 @@ private struct RootView: View {
                         } label: {
                             Label("Simulate a link", systemImage: "link")
                         }
+                        .accessibilityIdentifier("simulate-link")
                     }
                 }
         }

@@ -10,13 +10,13 @@ Requires Xcode 15+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew 
 
 ### 1. Add your API key
 
-Open [`KickFlipDemo/SDK/AttributionCoordinator.swift`](KickFlipDemo/SDK/AttributionCoordinator.swift)
-and replace the placeholder on the `apiKey` line with your workspace SDK key (`lt_live_…`, from
-the LinkTrail dashboard):
+Pass your workspace SDK key (`lt_live_…`, from the LinkTrail dashboard) as an environment variable
+when you generate the project. It's baked into `Info.plist` at build time, so the key never has to
+be written into a source file:
 
-```swift
-// KickFlipDemo/SDK/AttributionCoordinator.swift
-private static let apiKey = "lt_live_REPLACE_WITH_YOUR_KEY"   // ← paste your key here
+```bash
+cd example
+LINKTRAIL_KEY=lt_live_… xcodegen generate
 ```
 
 Without a valid key the backend returns `401`, surfaced via `onError` (you'll see a console
@@ -24,11 +24,25 @@ warning). The deep-link **simulator still works without a key** — it fabricate
 so you can explore the UI first and add the key only when you want the real install/open calls
 to authenticate.
 
-### 2. Build and run
+### 2. Pick how the deferred click token is read
+
+The demo covers all three `clickTokenSource` modes — choose one at generate time:
 
 ```bash
-cd example
-xcodegen generate            # builds KickFlipDemo.xcodeproj from project.yml
+LINKTRAIL_TOKEN_SOURCE=automatic   xcodegen generate   # default
+LINKTRAIL_TOKEN_SOURCE=pasteButton xcodegen generate
+LINKTRAIL_TOKEN_SOURCE=none        xcodegen generate
+```
+
+| Mode | First launch shows |
+|---|---|
+| `automatic` | The storefront plus the iOS **"Allow Paste"** system alert — the SDK reads the clipboard itself. |
+| `pasteButton` | A consent gate with a native **Paste** control. The tap *is* the consent, so there's no alert. |
+| `none` | An **"Allow tracking?"** screen. The clipboard is never touched; attribution is left to the probabilistic (IP) match. |
+
+### 3. Build and run
+
+```bash
 open KickFlipDemo.xcodeproj  # run on any iOS 16+ simulator
 ```
 
