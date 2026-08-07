@@ -142,11 +142,13 @@ four scenarios (home · category · product · product + voucher). Requires
 [XcodeGen](https://github.com/yonaskolb/XcodeGen):
 
 ```bash
-cd example && xcodegen generate && open KickFlipDemo.xcodeproj
+cd example && LINKTRAIL_KEY=lt_live_… xcodegen generate && open KickFlipDemo.xcodeproj
 ```
 
-Set your `lt_live_…` key in `KickFlipDemo/SDK/AttributionCoordinator.swift`; without one it routes
-the simulator's links locally. See [example/README.md](example/README.md).
+The key is baked into `Info.plist` at build time, so it never has to be written into a source file;
+without one the demo still routes the simulator's links locally. Add
+`LINKTRAIL_TOKEN_SOURCE=automatic|pasteButton|none` to try each deferred-token mode. See
+[example/README.md](example/README.md).
 
 ## License
 
