@@ -33,6 +33,16 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1"
         DEVELOPMENT_TEAM: ""
+        # Which deferred click-token path this build uses: "automatic" (iOS "Allow Paste" alert),
+        # "pasteButton" (consent gate with a native paste control, no alert), or "none" (clipboard
+        # never touched; purely probabilistic attribution). Pass it at build time, e.g.
+        #     LINKTRAIL_TOKEN_SOURCE=pasteButton xcodegen generate
+        # Defaults to automatic.
+        LINKTRAIL_TOKEN_SOURCE: ${LINKTRAIL_TOKEN_SOURCE:-automatic}
+        # Workspace SDK key, taken from $LINKTRAIL_KEY at build time so the real key is never written
+        # into source (and so concurrent builds can't race over a mutated file). Committed default is
+        # the placeholder, which the backend rejects.
+        LINKTRAIL_API_KEY: ${LINKTRAIL_KEY:-lt_live_REPLACE_WITH_YOUR_KEY}
     info:
       path: KickFlipDemo/Info.plist
       properties:
@@ -45,3 +55,14 @@ targets:
           - CFBundleURLName: io.linktrail.kickflipdemo
             CFBundleURLSchemes:
               - kickflip
+        # Read at runtime by AttributionCoordinator (see LINKTRAIL_TOKEN_SOURCE / LINKTRAIL_API_KEY above).
+        LinkTrailTokenSource: $(LINKTRAIL_TOKEN_SOURCE)
+        LinkTrailApiKey: $(LINKTRAIL_API_KEY)
+
+schemes:
+  KickFlipDemo:
+    build:
+      targets:
+        KickFlipDemo: all
+    run:
+      config: Debug
