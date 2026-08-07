@@ -28,6 +28,7 @@ struct DeepLinkSimulatorView: View {
                             }
                             .padding(.vertical, 4)
                         }
+                        .accessibilityIdentifier("scenario-\(scenario.id)")
                     }
                 } header: {
                     Text("Deferred deep link scenarios")

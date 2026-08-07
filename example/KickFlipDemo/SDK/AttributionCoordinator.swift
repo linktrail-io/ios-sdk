@@ -38,15 +38,60 @@ final class AttributionCoordinator {
 
     private let store: Store
 
+    /// Which deferred click-token path this build exercises. Selected at build time from the
+    /// `LINKTRAIL_TOKEN_SOURCE` env var (baked in by scripts/build-example.sh), so the same example
+    /// covers every mode:
+    ///   • `automatic`   — the SDK reads the clipboard itself → iOS shows the **"Allow Paste"** alert.
+    ///   • `pasteButton` — no alert; the user taps a native `LinkTrailPasteButton` on the consent gate.
+    ///   • `none`        — the clipboard is never touched: no alert, no gate, attribution is purely
+    ///                     probabilistic (the backend's IP match).
+    /// Defaults to `.automatic`.
+    static let tokenSource: LinkTrailClickTokenSource = {
+        switch Bundle.main.object(forInfoDictionaryKey: "LinkTrailTokenSource") as? String {
+        case "pasteButton": return .pasteButton
+        case "none":        return LinkTrailClickTokenSource.none
+        default:            return .automatic
+        }
+    }()
+
+    /// `true` when this build shows the paste-button consent gate instead of auto-reading.
+    static var usesPasteButton: Bool { tokenSource == .pasteButton }
+
+    /// `true` when this build asks for tracking consent up front. In `.none` there's no clipboard
+    /// token to collect, so the only thing worth asking about is tracking itself — and the SDK is
+    /// deny-by-default (`requireConsent`), so without an explicit answer every install would go out
+    /// as `consent: false`.
+    static var usesTrackingConsentScreen: Bool { tokenSource == LinkTrailClickTokenSource.none }
+
+    /// Records the user's tracking choice, then sends the install with that value.
+    ///
+    /// `autoTrackInstall` is off in this mode, so nothing has been sent yet — this is what keeps the
+    /// install to a single request carrying the real answer, instead of firing `consent: false` at
+    /// launch and correcting it afterwards.
+    func answerTrackingConsent(granted: Bool) {
+        LinkTrail.shared?.setConsent(granted)
+        LinkTrail.shared?.trackInstall()
+    }
+
     init(store: Store) {
         self.store = store
         configureSDK()
     }
 
     private func configureSDK() {
-        // autoTrackInstall: true → the install fires at launch, which also validates the key.
         // linkDomains → only treat kick.linktrail.io Universal Links as ours.
-        let options = LinkTrailOptions(linkDomains: ["kick.linktrail.io"], autoTrackInstall: true)
+        // clickTokenSource → see `tokenSource` above.
+        // autoTrackInstall: only in .automatic does the install fire at launch (reading the clipboard,
+        //   which shows "Allow Paste"). .pasteButton defers it until the user's paste tap, and .none
+        //   defers it until they answer the tracking-consent screen — so the install carries their
+        //   real answer instead of the deny-by-default `consent: false`.
+        // logEnabled → the demo prints what the SDK is doing (install, consent value, routing), which
+        // is what you want when eyeballing a deferred flow. Real apps leave it off.
+        let options = LinkTrailOptions(logEnabled: true,
+                                       logLevel: .debug,
+                                       linkDomains: ["kick.linktrail.io"],
+                                       autoTrackInstall: Self.tokenSource == .automatic,
+                                       clickTokenSource: Self.tokenSource)
         do {
             try LinkTrail.configure(apiKey: Self.apiKey, options: options)
         } catch {
@@ -94,7 +139,15 @@ final class AttributionCoordinator {
                     source: .reengagement)
     }
 
-    /// Your workspace SDK key (`lt_live_…`) from the LinkTrail dashboard. Replace this
-    /// placeholder with your own — until you do, the backend rejects it (surfaced via `onError`).
-    private static let apiKey = "lt_live_REPLACE_WITH_YOUR_KEY"
+    /// Your workspace SDK key (`lt_live_…`) from the LinkTrail dashboard, baked in at build time from
+    /// the `LINKTRAIL_KEY` environment variable (see `LINKTRAIL_API_KEY` in example/project.yml):
+    ///
+    ///     LINKTRAIL_KEY=lt_live_… bash scripts/build-example.sh
+    ///
+    /// Keeping it out of source means the real key is never written into a tracked file. Without the
+    /// env var the build falls back to the placeholder, which the backend rejects (surfaced via
+    /// `onError`).
+    private static let apiKey: String =
+        (Bundle.main.object(forInfoDictionaryKey: "LinkTrailApiKey") as? String)
+            .flatMap { $0.isEmpty ? nil : $0 } ?? "lt_live_REPLACE_WITH_YOUR_KEY"
 }
