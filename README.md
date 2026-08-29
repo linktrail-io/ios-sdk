@@ -14,13 +14,13 @@ In Xcode: **File → Add Package Dependencies…** → paste this repo's URL →
 `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/linktrail-io/ios-sdk.git", from: "0.0.11")
+.package(url: "https://github.com/linktrail-io/ios-sdk.git", from: "0.0.12")
 ```
 
 ### CocoaPods
 
 ```ruby
-pod 'LinkTrailSDK', '~> 0.0.11'
+pod 'LinkTrailSDK', '~> 0.0.12'
 ```
 
 Then run `pod install` and open the generated `.xcworkspace`.
@@ -61,9 +61,11 @@ let lastLink = LinkTrail.shared?.lastDeepLink
 // Attribution stream (fires when an install is attributed):
 LinkTrail.shared?.onAttribution { attribution in /* … */ }
 
-// Consent-gated install (defer configure's auto-track, then call manually):
-let lt = try LinkTrail.configure(apiKey: "lt_live_…", options: LinkTrailOptions(autoTrackInstall: false))
-lt.trackInstall()
+// Consent (on by default, deny-by-default): the install is HELD — nothing leaves the
+// device — until your app records a decision. Each answer sends exactly one install:
+LinkTrail.shared?.setConsent(true)    // grant → counted, attributed
+LinkTrail.shared?.setConsent(false)   // deny → sent once with consent:false, no device id, recorded nowhere
+// Collecting consent elsewhere? Opt out: LinkTrailOptions(requireConsent: false)
 
 // ATT / SKAdNetwork:
 await LinkTrail.shared?.requestTrackingAuthorization()
