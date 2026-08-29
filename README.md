@@ -6,6 +6,41 @@ of the [LinkTrail Android SDK](https://github.com/linktrail-io/android-sdk).
 
 - **Module:** `LinkTrailSDK` (Swift Package Manager · CocoaPods) · **iOS:** 15+
 
+## TL;DR
+
+Mobile attribution + deferred deep linking: click a tracking link → App Store → install → the first
+launch routes straight to the linked content, campaign context intact. Resilient by design —
+exponential-backoff retries, an offline event queue, idempotency keys, in-flight install
+coalescing, persisted attribution — with both callback and `async/await` APIs.
+
+**Consent is deny-by-default** (`requireConsent: true`) and is the defining behaviour:
+
+| Decision | Install request |
+|---|---|
+| not yet made | **held**, persisted across launches — no call at all, and the clipboard isn't read |
+| granted (`setConsent(true)`) | sent with `consent: true` — counted and attributed |
+| denied (`setConsent(false)`) | sent once with `consent: false` — the deep link still resolves so the user lands correctly, nothing is recorded, and **no device identifier is sent** (neither `deviceId` nor the `Idempotency-Key` derived from it) |
+
+Also gated: custom events are dropped and re-engagement opens aren't recorded — the user is still
+routed. `force` does **not** bypass the gate; it means "send it again", never "send it early". An
+app that never calls `setConsent(_:)` sends nothing at all — call it once your consent UI resolves,
+or opt out with `requireConsent: false` if consent is handled elsewhere.
+
+**Deferred click token.** iOS has no install referrer, so the web interstitial leaves
+`lt_click=<32-hex>` on the clipboard for the SDK to replay on first launch. `clickTokenSource`:
+
+| | Behaviour |
+|---|---|
+| `.pasteButton` *(default)* | your app renders `LinkTrailPasteButton` — no system alert, and the tap **also records consent** (`grantsConsent: false` to opt out) |
+| `.automatic` | the SDK reads the clipboard itself → iOS shows **"Allow Paste"** |
+| `.none` | the clipboard is never touched, by any path — even `trackInstall(clickToken:)` ignores a token handed to it |
+
+The token is consumed once (pasteboard cleared), held across the consent decision, and replayed
+with whichever install eventually goes out.
+
+**Routing ≠ tracking.** A user who declines — or hasn't answered — still reaches the right screen;
+only the recording is withheld.
+
 ## Install
 
 ### Swift Package Manager
