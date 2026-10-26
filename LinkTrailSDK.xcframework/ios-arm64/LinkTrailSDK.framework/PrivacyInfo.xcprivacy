@@ -4,7 +4,8 @@
 <dict>
     <!--
       LinkTrail performs first-party install attribution: it collects an app-scoped, per-install
-      device identifier (a random UUID stored in UserDefaults that resets on uninstall) and links
+      device identifier (a random UUID stored in a device-only file, excluded from backups, that
+      resets on uninstall) and links
       it to the user for attribution and analytics of the app's OWN installs. It reads NO system
       identifier — neither the IDFA nor the IDFV — and does NOT track users across apps or websites
       owned by other companies, so NSPrivacyTracking is false and the backend is not an ATT tracking
