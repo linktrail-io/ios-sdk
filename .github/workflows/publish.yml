@@ -6,9 +6,10 @@ name: Publish
 #   2. CocoaPods             -> pod trunk push.
 # Idempotent: tags/publishes only what's new.
 #
-# Runs on a GitHub-hosted macOS runner: this job only tags and pushes a pod — no simulator, no Xcode
-# build, no local state — so it must NOT depend on the org self-hosted runner (which this repo has no
-# access to; that is why every earlier Publish run sat queued and was cancelled).
+# Runs on the org's self-hosted Mac minis, like every job in the org (no GitHub-hosted minutes). This
+# repo is public, so the org runner group must allow public repositories; until it does, a run sits
+# queued (as the earliest Publish runs did). The job keeps no state on the machine: CocoaPods is
+# installed per job, at a pinned version, into RUNNER_TEMP, with its home dir there too.
 #
 # SECRET (this repo): COCOAPODS_TRUNK_TOKEN (from `pod trunk register`, ~/.netrc password).
 
@@ -33,7 +34,10 @@ env:
 
 jobs:
   publish:
-    runs-on: macos-latest
+    # Public repo: never run a fork's pull_request code on the self-hosted Macs. (This workflow has no
+    # pull_request trigger today; the guard keeps it that way if one is ever added.)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, macOS]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,6 +66,36 @@ jobs:
             git push origin "$V"
             echo "::notice::Published SPM tag $V"
           fi
+
+      # CocoaPods 1.16.2 into this job's temp dir: no global gem install, nothing left on the Mac. The
+      # system Ruby (2.6) is too old for CocoaPods' dependencies, so it runs on Homebrew's Ruby (the
+      # `ruby` formula when installed, else the portable Ruby Homebrew ships for itself).
+      - name: Set up CocoaPods
+        env:
+          COCOAPODS_VERSION: 1.16.2
+        run: |
+          set -euo pipefail
+          BREW="$(command -v brew || true)"
+          for c in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+            [ -n "$BREW" ] && break
+            [ -x "$c" ] && BREW="$c"
+          done
+          [ -n "$BREW" ] || { echo "::error::Homebrew not found on this runner; it provides the Ruby CocoaPods runs on."; exit 1; }
+          RUBY_BIN=""
+          for d in "$("$BREW" --prefix ruby 2>/dev/null || true)/bin" "$("$BREW" --repository)/Library/Homebrew/vendor/portable-ruby/current/bin"; do
+            if [ -x "$d/ruby" ] && "$d/ruby" -e 'exit(RUBY_VERSION >= "3.1" ? 0 : 1)'; then RUBY_BIN="$d"; break; fi
+          done
+          [ -n "$RUBY_BIN" ] || { echo "::error::No Ruby >= 3.1 from Homebrew on this runner (brew install ruby, or run any brew command once to fetch its portable Ruby)."; exit 1; }
+          GEMS="$RUNNER_TEMP/cocoapods-gems"
+          rm -rf "$GEMS" "$RUNNER_TEMP/cocoapods-home"
+          GEM_HOME="$GEMS" GEM_PATH="$GEMS" "$RUBY_BIN/gem" install --no-document --bindir "$GEMS/bin" "cocoapods:$COCOAPODS_VERSION"
+          {
+            echo "GEM_HOME=$GEMS"
+            echo "GEM_PATH=$GEMS"
+            echo "CP_HOME_DIR=$RUNNER_TEMP/cocoapods-home"
+          } >> "$GITHUB_ENV"
+          { echo "$GEMS/bin"; echo "$RUBY_BIN"; } >> "$GITHUB_PATH"
+          echo "Ruby $("$RUBY_BIN/ruby" -e 'print RUBY_VERSION') from $RUBY_BIN"
 
       - name: Publish to CocoaPods trunk
         env:
