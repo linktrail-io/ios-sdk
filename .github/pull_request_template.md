@@ -9,11 +9,9 @@ Closes #
 ## Production impact
 | | |
 |---|---|
-| Breaking change (API, SDK or behaviour) | Yes / No |
-| Database migration | Yes / No |
-| Index added or changed | Yes / No |
-| New env var, secret or config | Yes / No |
-| Safe to roll back | Yes / No |
+| Docs only | Yes / No |
+| Changes a published release | Yes / No |
+| Breaking for integrators | Yes / No |
 | Risk | Low / Medium / High |
 
 <!-- If anything is "Yes", say what someone must do before or after deploy. -->
