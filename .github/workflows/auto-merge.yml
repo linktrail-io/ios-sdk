@@ -1,0 +1,93 @@
+name: Auto-merge
+
+# Turns GitHub auto-merge on for a PR whose title contains "auto-merge" (any case, for example
+# "[auto-merge] Fix typo"), and off again when the word is removed. GitHub then merges the PR with
+# a merge commit (never squash: stacked PRs depend on it) once the required checks and approvals
+# pass. Drafts never get it: it is turned on when the PR is marked ready for review, and off if
+# the PR goes back to draft. Fork PRs are skipped.
+#
+# Token: the AUTOMERGE_TOKEN secret if set, else GITHUB_TOKEN. A merge made with GITHUB_TOKEN does
+# not trigger push workflows on the base branch, so post-merge CI would not run; the job warns.
+#
+# This is a helper, not a check. Do not make it a required status check.
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, ready_for_review, converted_to_draft]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  toggle:
+    name: Toggle auto-merge from title
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Enable or disable auto-merge
+        env:
+          AUTOMERGE_TOKEN: ${{ secrets.AUTOMERGE_TOKEN }}
+          FALLBACK_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ -n "$AUTOMERGE_TOKEN" ]; then
+            export GH_TOKEN="$AUTOMERGE_TOKEN"
+            fallback=false
+          else
+            export GH_TOKEN="$FALLBACK_TOKEN"
+            fallback=true
+          fi
+
+          # Read the live PR, not the event payload: a later edit may already have changed it.
+          # One field per line, title last (titles cannot contain newlines). No jq needed.
+          fields="$(gh pr view "$PR" --json state,isDraft,title,autoMergeRequest \
+            -q '.state, .isDraft, (.autoMergeRequest.mergeMethod // ""), .title')"
+          { read -r state; read -r draft; read -r method; IFS= read -r title; } <<<"$fields"
+
+          if [ "$state" != "OPEN" ]; then
+            echo "PR #$PR is $state: nothing to do."
+            exit 0
+          fi
+
+          want=off
+          shopt -s nocasematch
+          if [[ "$title" == *auto-merge* ]] && [ "$draft" != "true" ]; then
+            want=on
+          fi
+          shopt -u nocasematch
+
+          if [ "$want" = "on" ]; then
+            if [ "$fallback" = "true" ]; then
+              echo "::warning title=AUTOMERGE_TOKEN not set::Using GITHUB_TOKEN. A merge made with GITHUB_TOKEN does not trigger push workflows on the base branch, so post-merge CI will not run for this PR. Add the AUTOMERGE_TOKEN org secret to fix this."
+            fi
+            if [ "$method" = "MERGE" ]; then
+              echo "Auto-merge already on (merge commit)."
+              exit 0
+            fi
+            if [ -n "$method" ]; then
+              gh pr merge "$PR" --disable-auto >/dev/null
+            fi
+            # Retry briefly: right after a push GitHub may still be computing the merge state.
+            for attempt in 1 2 3; do
+              if gh pr merge "$PR" --auto --merge; then
+                echo "Auto-merge on (merge commit)."
+                exit 0
+              fi
+              [ "$attempt" = 3 ] || sleep 10
+            done
+            exit 1
+          fi
+
+          if [ -n "$method" ]; then
+            gh pr merge "$PR" --disable-auto
+            echo "Auto-merge off."
+          else
+            echo "Auto-merge not requested."
+          fi

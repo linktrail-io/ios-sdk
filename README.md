@@ -368,6 +368,18 @@ without one the demo still routes the simulator's links locally. Add
 `LINKTRAIL_TOKEN_SOURCE=automatic|pasteButton|none` to try each deferred-token mode. See
 [example/README.md](example/README.md).
 
+## Auto-merge
+
+Put `auto-merge` anywhere in a PR title (any case, e.g. `[auto-merge] Fix typo`) and the
+`Auto-merge` workflow (`.github/workflows/auto-merge.yml`) turns on GitHub auto-merge for it.
+GitHub then merges it with a merge commit (never squash, so stacked PRs keep working) once the
+required checks and approvals pass. Drafts are skipped: auto-merge turns on when the PR is marked
+ready for review. Remove the word from the title, or convert the PR back to draft, to turn it off.
+PRs from forks are ignored. Until the `AUTOMERGE_TOKEN` org secret exists, the merge is made with
+`GITHUB_TOKEN`, which does not trigger the push workflows on the base branch.
+
+This repo's `main` rulesets require two approving reviews and signed commits, so auto-merge completes only after the PR is approved.
+
 ## License
 
 Copyright © 2026 LinkTrail. All rights reserved. See [LICENSE](LICENSE).
