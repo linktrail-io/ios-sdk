@@ -62,8 +62,13 @@ extension LinkTrailSDK.LinkTrail {
   public static let version: Swift.String
 }
 extension LinkTrailSDK.LinkTrail {
+  @discardableResult
+  public static func setSDKIdentifier(platform: Swift.String, version: Swift.String) -> Swift.Bool
+}
+extension LinkTrailSDK.LinkTrail {
   final public func onAttribution(_ callback: @escaping (LinkTrailSDK.LinkTrailAttribution) -> Swift.Void)
   final public func onLink(_ callback: @escaping (LinkTrailSDK.LinkTrailDeepLink, LinkTrailSDK.LinkTrailLinkSource) -> Swift.Void)
+  final public func onLink(_ callback: ((LinkTrailSDK.LinkTrailDeepLink, LinkTrailSDK.LinkTrailLinkSource) -> Swift.Void)?)
   final public func onError(_ callback: @escaping (any Swift.Error) -> Swift.Void)
 }
 extension LinkTrailSDK.LinkTrail {
@@ -171,6 +176,7 @@ public enum LinkTrailError : Swift.Error, Swift.Equatable, Swift.Sendable {
   case notALinkTrailURL
   case missingAPIKey
   case invalidAPIKey
+  case invalidEvent(reason: Swift.String)
   public static func == (a: LinkTrailSDK.LinkTrailError, b: LinkTrailSDK.LinkTrailError) -> Swift.Bool
 }
 extension LinkTrailSDK.LinkTrailError : Foundation.LocalizedError {
