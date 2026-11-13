@@ -68,6 +68,7 @@ jobs:
         env:
           V: ${{ steps.ver.outputs.v }}
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           if [ -z "${COCOAPODS_TRUNK_TOKEN:-}" ]; then
@@ -75,9 +76,32 @@ jobs:
             exit 1
           fi
           pod --version
-          if pod trunk info LinkTrailSDK 2>/dev/null | grep -qE "^[[:space:]]*-[[:space:]]*$V$"; then
+          # Is LinkTrailSDK $V already published? Asks trunk's API and the CocoaPods/Specs repo directly
+          # (the CDN and `pod trunk info` lag behind a push). Specs/2/3/2 = first 3 hex chars of md5("LinkTrailSDK").
+          published() {
+            curl -fsS -o /dev/null "https://trunk.cocoapods.org/api/v1/pods/LinkTrailSDK/versions/$V" 2>/dev/null && return 0
+            curl -fsS -o /dev/null -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/repos/CocoaPods/Specs/contents/Specs/2/3/2/LinkTrailSDK/$V/LinkTrailSDK.podspec.json" 2>/dev/null
+          }
+          if published; then
             echo "::notice::CocoaPods LinkTrailSDK $V already published — skipping."
             exit 0
           fi
-          pod trunk push LinkTrailSDK.podspec --allow-warnings --skip-import-validation
-          echo "::notice::Published CocoaPods pod LinkTrailSDK $V"
+          if pod trunk push LinkTrailSDK.podspec --allow-warnings --skip-import-validation 2>&1 | tee push.log; then
+            echo "::notice::Published CocoaPods pod LinkTrailSDK $V"
+            exit 0
+          fi
+          # The push failed. Trunk can time out (or report a duplicate entry on a rerun) after it has already
+          # committed the spec, so re-check for ~2 minutes before failing.
+          if grep -q "Unable to accept duplicate entry" push.log; then
+            echo "Trunk reports a duplicate entry for $V; checking that the spec exists."
+          fi
+          for _ in $(seq 1 12); do
+            if published; then
+              echo "::notice::pod trunk push failed, but LinkTrailSDK $V is published in CocoaPods/Specs — treating as success."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::pod trunk push failed and LinkTrailSDK $V is not in CocoaPods/Specs."
+          exit 1
