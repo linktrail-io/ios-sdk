@@ -1,0 +1,5 @@
+// Used only by e2e/scripts/e2e-maestro.sh, via XCODE_XCCONFIG_FILE (which
+// beats every other build-setting level). It makes $LINKTRAIL_KEY from the environment win over
+// Secrets.xcconfig, without the key ever appearing on the xcodebuild command line or in a file
+// (xcodebuild echoes command-line build settings into its log).
+LINKTRAIL_API_KEY = $(LINKTRAIL_KEY)

@@ -1,0 +1,202 @@
+name: E2E (published SDK)
+
+# Deferred deep-link E2E against the PUBLISHED SDK: the KickFlip example in e2e/example/ depends on
+# this repo's SPM release tag (exactVersion in e2e/example/project.yml, the one place to bump), so a
+# run tests exactly what customers install, against the production backend. Maestro drives Safari and
+# the app on a simulator; e2e/scripts/e2e-flows.json lists the flows, e2e/scripts/e2e-env.json the
+# hosts and links (a link type with no link on prod is skipped with a notice). See e2e/README.md.
+#
+# GitHub-hosted macOS runners only. This workflow never publishes anything: it only reads the repo
+# and the tag. Publishing stays in publish.yml, which runs on podspec / framework changes to main.
+#
+# SECRETS (repo Settings -> Secrets and variables -> Actions):
+#   LINKTRAIL_KEY  SDK key of the prod e2e workspace. Without it (fork pull requests never get
+#                  secrets) the flows are skipped with a notice; the example is still built against
+#                  the published package, so a broken tag or interface still fails the run.
+#   E2E_TOKEN      X-E2E-Token for the backend checks (install recorded, reward/earning, openCount,
+#                  events). Without it the flows still run and those checks are recorded as skipped.
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/pull_request_template.md'
+      - 'LICENSE'
+  schedule:
+    - cron: '0 3 * * *'   # nightly, 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      link_types:
+        description: 'Link types to run (all, none, or e.g. general,partner); default all'
+        type: string
+        required: false
+        default: all
+      flows:
+        description: 'Optional: only these flows (space-separated names or unique substrings); empty = all'
+        type: string
+        required: false
+        default: ''
+
+# A new push to a PR cancels that PR's older run; schedule and manual runs are never cancelled.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('e2e-pr-{0}', github.event.pull_request.number) || format('e2e-run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  LANG: en_US.UTF-8
+  LC_ALL: en_US.UTF-8
+  # Maestro CLI version installed on the runner.
+  MAESTRO_VERSION: '2.11.0'
+
+jobs:
+  e2e:
+    runs-on: macos-latest
+    # Builds (~5 min) plus ~40 flows at 1-2 min each on a hosted runner.
+    timeout-minutes: 150
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Which environment and links this run tests, from e2e/scripts/e2e-env.json. First, so a bad
+      # input fails in seconds. Inputs reach the script as env vars, never pasted into the shell.
+      - name: Resolve the e2e links
+        id: targets
+        env:
+          E2E_LINK_TYPES: ${{ inputs.link_types || vars.E2E_LINK_TYPES }}
+          E2E_REPORT_DIR: ${{ runner.temp }}/e2e-report
+        run: |
+          set -euo pipefail
+          rm -rf "$E2E_REPORT_DIR"; mkdir -p "$E2E_REPORT_DIR"
+          if ! out="$(python3 -I e2e/scripts/e2e-env.py resolve --format github --write "$E2E_REPORT_DIR/targets.json" 2>"$RUNNER_TEMP/e2e-env.err")"; then
+            err="$(grep -m1 '^ERROR: ' "$RUNNER_TEMP/e2e-env.err" || cat "$RUNNER_TEMP/e2e-env.err")"
+            echo "::error title=e2e targets::${err#ERROR: }"; exit 1
+          fi
+          printf '%s\n' "$out" >> "$GITHUB_OUTPUT"
+          skipped="$(printf '%s\n' "$out" | sed -n 's/^link_types_skipped=//p')"
+          [ -z "$skipped" ] || echo "::notice title=e2e link types::skipped on prod (no link configured in e2e/scripts/e2e-env.json): $skipped"
+          version="$(sed -n 's/^ *exactVersion: *"\{0,1\}\([^"]*\)"\{0,1\} *$/\1/p' e2e/example/project.yml | head -1)"
+          [ -n "$version" ] || { echo "::error::no exactVersion for the LinkTrail package in e2e/example/project.yml"; exit 1; }
+          echo "sdk_version=$version" >> "$GITHUB_OUTPUT"
+          echo "Published SDK under test: $version"
+          python3 -I -c 'import json,sys; t=json.load(open(sys.argv[1])); print("Environment: %s · backend: %s" % (t["environment"], t["backend"])); [print("  %-26s %s" % (k, v)) for k, v in t["links"].items()]' "$E2E_REPORT_DIR/targets.json"
+
+      # Fork PRs get no secrets: say so once and run the build-only check instead of the flows.
+      - name: Check secrets
+        id: secrets
+        env:
+          HAS_KEY: ${{ secrets.LINKTRAIL_KEY != '' }}
+          HAS_TOKEN: ${{ secrets.E2E_TOKEN != '' }}
+        run: |
+          if [ "$HAS_KEY" = "true" ]; then
+            echo "flows=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "flows=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=e2e::LINKTRAIL_KEY is not available (fork pull request, or the secret is not set): the Maestro flows are skipped; the example is only built against the published SDK."
+          fi
+          if [ "$HAS_KEY" = "true" ] && [ "$HAS_TOKEN" != "true" ]; then
+            echo "::warning title=e2e::E2E_TOKEN is not set: the flows run, but every backend check is recorded as skipped."
+          fi
+
+      - name: Toolchain
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          brew install xcodegen
+          xcodegen --version
+
+      # Maestro needs Java 17+.
+      - name: Java for Maestro
+        if: steps.secrets.outputs.flows == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Maestro
+        if: steps.secrets.outputs.flows == 'true'
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+          "$HOME/.maestro/bin/maestro" --version
+
+      # No secret: build every mode against the published package with a placeholder-shaped key the
+      # build check accepts. Nothing is installed or run, so the key is never sent anywhere.
+      - name: Build the example against the published SDK (no flows)
+        if: steps.secrets.outputs.flows != 'true'
+        env:
+          LINKTRAIL_KEY: lt_live_build_only_not_a_real_key
+          E2E_BUILD_ONLY: '1'
+        run: bash e2e/scripts/e2e-maestro.sh
+
+      - name: Boot a simulator
+        if: steps.secrets.outputs.flows == 'true'
+        run: |
+          set -euo pipefail
+          UDID="$(xcrun simctl list devices available | grep 'iPhone ' \
+                 | grep -oiE '[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}' | head -1)"
+          [ -n "$UDID" ] || { echo "::error::no iPhone simulator available"; exit 1; }
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID" >/dev/null 2>&1 || true
+          xcrun simctl bootstatus "$UDID" -b >/dev/null 2>&1 || true
+          xcrun simctl list devices booted
+
+      - name: E2E — Maestro flows (published SDK ${{ steps.targets.outputs.sdk_version }})
+        if: steps.secrets.outputs.flows == 'true'
+        env:
+          LINKTRAIL_KEY: ${{ secrets.LINKTRAIL_KEY }}
+          E2E_TOKEN: ${{ secrets.E2E_TOKEN }}
+          E2E_LINK_TYPES: ${{ inputs.link_types || vars.E2E_LINK_TYPES }}
+          FLOWS: ${{ inputs.flows }}
+          E2E_REPORT_DIR: ${{ runner.temp }}/e2e-report
+        run: |
+          set -euo pipefail
+          # FLOWS is word-split on purpose (flow names have no spaces); empty runs them all.
+          # shellcheck disable=SC2086
+          DEVICE="$SIM_UDID" bash e2e/scripts/e2e-maestro.sh $FLOWS
+
+      # Always written once the flows ran (pass or fail): the run's Summary page and the e2e-report
+      # artifact. Nothing secret is in it: keys are removed and click tokens cut to 4 characters.
+      - name: E2E report — run summary
+        if: always() && steps.secrets.outputs.flows == 'true'
+        env:
+          E2E_REPORT_DIR: ${{ runner.temp }}/e2e-report
+          REPORT_ENV: ${{ steps.targets.outputs.e2e_env_name }}
+          REPORT_BACKEND: ${{ steps.targets.outputs.backend_url }}
+          REPORT_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+          REPORT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
+          SDK_VERSION: ${{ steps.targets.outputs.sdk_version }}
+        run: |
+          set -uo pipefail
+          mkdir -p "$E2E_REPORT_DIR"
+          echo "Published SDK under test: **$SDK_VERSION** (SPM tag)" >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          if python3 -I e2e/scripts/e2e-report.py render --dir "$E2E_REPORT_DIR" \
+               --env "$REPORT_ENV" --backend "$REPORT_BACKEND" --commit "$REPORT_COMMIT" --runner "${RUNNER_NAME:-unknown}" \
+               --run-url "$REPORT_RUN_URL"; then
+            cat "$E2E_REPORT_DIR/report.md" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "iOS SDK e2e: no results (the report could not be rendered; see the job log)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: E2E report — artifact
+        if: always() && steps.secrets.outputs.flows == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: |
+            ${{ runner.temp }}/e2e-report/report.json
+            ${{ runner.temp }}/e2e-report/report.html
+            ${{ runner.temp }}/e2e-report/report.md
+            ${{ runner.temp }}/e2e-report/screenshots/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Shut the simulator down
+        if: always()
+        run: '[ -n "${SIM_UDID:-}" ] && xcrun simctl shutdown "$SIM_UDID" || true'

@@ -1,0 +1,98 @@
+name: KickFlipDemo
+options:
+  bundleIdPrefix: io.linktrail
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+  # Refuse to generate without a workspace SDK key ($LINKTRAIL_KEY or Config/Secrets.xcconfig), so
+  # nobody builds an app whose every call is rejected with a 401. See e2e/README.md.
+  preGenCommand: bash ../scripts/check-example-key.sh
+
+packages:
+  LinkTrail:
+    # The PUBLISHED binary package: this repo's SPM release tag, fetched from GitHub exactly as an
+    # app would add it (not the working tree), so the e2e run tests what customers install.
+    # The ONE place the tested SDK version lives: bump it here after a release.
+    url: https://github.com/linktrail-io/ios-sdk
+    exactVersion: 0.2.0
+
+targets:
+  KickFlipDemo:
+    type: application
+    platform: iOS
+    sources:
+      - KickFlipDemo
+    dependencies:
+      - package: LinkTrail
+        product: LinkTrailSDK
+    entitlements:
+      path: KickFlipDemo/KickFlipDemo.entitlements
+      properties:
+        com.apple.developer.associated-domains:
+          - applinks:$(LINKTRAIL_LINK_HOST)
+    # LINKTRAIL_API_KEY (the workspace SDK key) is NOT set here: target settings would override the
+    # xcconfig. Config/KickFlip.xcconfig resolves it from Config/Secrets.xcconfig (gitignored) or
+    # $LINKTRAIL_KEY (Secrets.xcconfig wins when it sets the key). e2e/scripts/e2e-maestro.sh
+    # makes $LINKTRAIL_KEY win via XCODE_XCCONFIG_FILE=Config/EnvOverride.xcconfig.
+    configFiles:
+      Debug: Config/KickFlip.xcconfig
+      Release: Config/KickFlip.xcconfig
+    preBuildScripts:
+      # Same check as the preGenCommand, run on the key this build actually resolved. showEnvVars is
+      # off so Xcode does not dump every build setting (the key included) into the build log.
+      - name: Check LinkTrail SDK key
+        basedOnDependencyAnalysis: false
+        showEnvVars: false
+        script: bash "${SRCROOT}/../scripts/check-example-key.sh" --resolved
+    settings:
+      base:
+        MARKETING_VERSION: "0.0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        PRODUCT_BUNDLE_IDENTIFIER: io.linktrail.kickflipdemo
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1"
+        DEVELOPMENT_TEAM: ""
+        # Which deferred click-token path this build uses: "automatic" (iOS "Allow Paste" alert),
+        # "pasteButton" (consent gate with a native paste control, no alert), or "none" (clipboard
+        # never touched; purely probabilistic attribution).
+        # Override per build by exporting the same name, e.g.
+        #     LINKTRAIL_TOKEN_SOURCE=pasteButton xcodebuild …
+        # (xcodebuild lets an environment variable override any build setting.) Defaults to automatic.
+        LINKTRAIL_TOKEN_SOURCE: automatic
+        # The LinkTrail-hosted link host for this build: drives both the Associated Domains
+        # entitlement and the SDK's linkDomains, so Universal Links and re-engagement scoping follow
+        # whichever environment the E2E run targets. e2e/scripts/e2e-maestro.sh sets it from e2e-env.json.
+        LINKTRAIL_LINK_HOST: kick.linktrail.io
+        # Optional second link host for linkDomains: the workspace's custom link domain. Empty = none.
+        # e2e/scripts/e2e-maestro.sh sets it from e2e-env.json, so the e2e re-engagement flows' custom-domain
+        # links are claimed by the SDK.
+        LINKTRAIL_CUSTOM_LINK_HOST: ""
+    info:
+      path: KickFlipDemo/Info.plist
+      properties:
+        CFBundleDisplayName: KickFlip
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSUserTrackingUsageDescription: "KickFlip uses this to attribute your install to the campaign you came from and personalize your first experience."
+        CFBundleURLTypes:
+          - CFBundleURLName: io.linktrail.kickflipdemo
+            CFBundleURLSchemes:
+              - kickflip
+        # Read at runtime by AttributionCoordinator (see LINKTRAIL_TOKEN_SOURCE above and Config/KickFlip.xcconfig).
+        LinkTrailTokenSource: $(LINKTRAIL_TOKEN_SOURCE)
+        LinkTrailApiKey: $(LINKTRAIL_API_KEY)
+        LinkTrailLinkHost: $(LINKTRAIL_LINK_HOST)
+        LinkTrailCustomLinkHost: $(LINKTRAIL_CUSTOM_LINK_HOST)
+        # SDK logging on/off (YES/NO). Default YES in Config/KickFlip.xcconfig.
+        LinkTrailLogs: $(LINKTRAIL_LOGS)
+
+# The deferred-deep-link E2E is driven entirely by Maestro (e2e/scripts/*.yaml via
+# e2e/scripts/e2e-maestro.sh) against this app built with the published SDK — no XCUITest target.
+schemes:
+  KickFlipDemo:
+    build:
+      targets:
+        KickFlipDemo: all
+    run:
+      config: Debug

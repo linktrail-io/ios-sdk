@@ -1,0 +1,33 @@
+appId: com.apple.mobilesafari
+env:
+  # Build mode for this flow: no clipboard auto-read, so iOS shows NO "Allow Paste" alert —
+  # the app opens on the consent gate and the native Paste control is the consent.
+  LINKTRAIL_TOKEN_SOURCE: pasteButton
+---
+# REWARD EVENTS × DENY — tracking denied (the paste still routes), then the same events are requested.
+# Runs only per event-reward link type, as reward_custom_deny_events__<type>.
+# ── Safari: the interstitial stages the real lt_click token on the clipboard ──
+- stopApp
+- launchApp
+- tapOn: { id: "TabBarItemTitle" }
+- inputText: ${LINK_URL}
+- pressKey: Enter
+- extendedWaitUntil: { visible: { text: "Continue to( the)? App Store" }, timeout: 20000 }
+- tapOn: { text: "Continue to( the)? App Store" }
+- tapOn: { text: "OK", optional: true }
+- pressKey: Home
+# ── App, first launch: "Don't track me" denies tracking, the Paste tap still routes (deny still
+#    routes): nothing is counted. The runner checks that, then builds EVENTS_URL. ──
+- launchApp: { appId: io.linktrail.kickflipdemo, clearState: true }
+- assertVisible: "Welcome to KickFlip"
+- tapOn: { id: "consent-no-tracking" }
+- assertVisible: { id: "consent-tracking-off" }
+- tapOn: { text: "^Paste$" }
+- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 20000, optional: false }
+# ── Events: the runner passes EVENTS_URL = kickflip://e2e-track?event=…; the DEBUG example app sends
+#    each event through LinkTrail.trackEvent (per_event: reward.eventName twice + one other event;
+#    rev_share: one revenue event in the reward's currency) and counts them on its debug footer. ──
+- openLink: ${EVENTS_URL}
+- tapOn: { text: "^Open$", optional: true }
+- extendedWaitUntil: { visible: { id: "debug-events-requested", text: "${EXPECT_EVENTS_TEXT}" }, timeout: 20000, optional: false }
+# Tracking is denied, so the SDK drops every one of them: nothing is sent and the earning stays 0.

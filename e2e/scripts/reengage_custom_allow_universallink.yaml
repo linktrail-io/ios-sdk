@@ -1,0 +1,43 @@
+appId: com.apple.mobilesafari
+env:
+  # Build mode for this flow: no clipboard auto-read, so iOS shows NO "Allow Paste" alert —
+  # the app opens on the consent gate and the native Paste control is the consent.
+  LINKTRAIL_TOKEN_SOURCE: pasteButton
+---
+# RE-ENGAGEMENT × ALLOW — the app is already installed and launched once, then the user opens the
+# same link again. Runs only per link type (scripts/e2e-flows.json link_type_only), as
+# reengage_custom_allow_universallink__<type>.
+# ── Safari: the interstitial stages the real lt_click token on the clipboard ──
+- stopApp
+- launchApp
+- tapOn: { id: "TabBarItemTitle" }
+- inputText: ${LINK_URL}
+- pressKey: Enter
+- extendedWaitUntil: { visible: { text: "Continue to( the)? App Store" }, timeout: 20000 }
+- tapOn: { text: "Continue to( the)? App Store" }
+- tapOn: { text: "OK", optional: true }
+- pressKey: Home
+# ── App, first launch: the paste tap is the consent, the click's install is counted once and the
+#    deferred link lands on the product. The runner then checks the backend (installCount 1 and the
+#    reward) and keeps its openCount as the baseline for the open below. ──
+- launchApp: { appId: io.linktrail.kickflipdemo, clearState: true }
+- assertVisible: "Welcome to KickFlip"
+- tapOn: { text: "^Paste$" }
+- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 20000, optional: false }
+# Let the deferred banner go, so the banner after the open below is the open's own.
+- extendedWaitUntil: { notVisible: { text: "Opened from your link" }, timeout: 10000, optional: false }
+- pressKey: Home
+# ── Re-engagement: open the link with the app installed. A real Universal Link needs a signed build
+#    with the Associated Domains entitlement and an AASA match; the e2e build is unsigned
+#    (CODE_SIGNING_ALLOWED=NO), so `simctl openurl https://…` would open Safari instead of the app.
+#    The closest real path: the runner passes REENGAGE_URL = kickflip://e2e-universal-link?url=<the
+#    https link>, opened with simctl openurl (Maestro openLink); the DEBUG example app hands that
+#    https URL to the SDK exactly as its Universal Link handler does (handleDeepLink). ──
+- openLink: ${REENGAGE_URL}
+- tapOn: { text: "^Open$", optional: true }
+# The DEBUG footer's "E2E link: reengagement" (it read "deferred" after the first launch) proves the
+# open itself routed, as re-engagement, to the product with its voucher. Not the "Welcome back"
+# banner: it hides itself after 3.5s, often before this step looks (the optional Open tap above
+# can spend that long looking for a prompt simctl doesn't show).
+- extendedWaitUntil: { visible: { id: "e2e-link-source", text: "E2E link: reengagement" }, timeout: 20000, optional: false }
+- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 10000, optional: false }

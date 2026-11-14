@@ -1,0 +1,30 @@
+appId: com.apple.mobilesafari
+env:
+  # Build mode for this flow: the SDK reads the clipboard itself, so iOS shows "Allow Paste".
+  LINKTRAIL_TOKEN_SOURCE: automatic
+---
+# SUBDOMAIN (the LinkTrail-hosted host) × DENY — full deferred flow, all in Maestro.
+# ── Safari: type the subdomain link ($LINK_URL); the interstitial stages the real lt_click token ──
+# (this host auto-redirects to the App Store — no "Continue" CTA — and stages the token on
+#  page load, so the CTA tap and the "address is invalid" OK are optional.)
+- stopApp
+- launchApp
+- tapOn: { id: "TabBarItemTitle" }
+- inputText: ${LINK_URL}
+- pressKey: Enter
+- extendedWaitUntil: { visible: { text: "Continue to( the)? App Store" }, timeout: 10000, optional: true }
+- tapOn: { text: "Continue to( the)? App Store", optional: true }
+- tapOn: { text: "OK", optional: true }
+- pressKey: Home
+# ── App: fresh install; we DENY tracking but ALLOW the paste (deny still
+#    routes): the SDK sends one uncounted consent:false install with the token, and the
+#    deferred link still lands on the product with its voucher. Nothing is counted. ──
+- launchApp: { appId: io.linktrail.kickflipdemo, clearState: true }
+# The SDK is deny-by-default: with no decision recorded it reads nothing and sends nothing,
+# so the app asks first. Only after an answer does it touch the clipboard — which is what
+# raises the iOS "Allow Paste" alert below.
+- assertVisible: "Allow tracking?"
+- tapOn: { id: "tracking-deny" }
+- tapOn: { text: "^Allow Paste$" }
+# Routed, not tracked. EXPECT_VOUCHER_TEXT comes from the runner (scripts/e2e-env.json).
+- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 10000, optional: false }

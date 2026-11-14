@@ -1,0 +1,22 @@
+appId: com.apple.mobilesafari
+env:
+  # Build mode for this flow: the clipboard is never touched — no "Allow Paste" alert. The app asks
+  # for tracking consent instead, and attribution is probabilistic (the backend IP match).
+  LINKTRAIL_TOKEN_SOURCE: none
+---
+# CUSTOM domain × DENY (probabilistic) — full deferred flow, all in Maestro.
+# ── Safari: hit the campaign link. In this mode NO token is read from the clipboard. ──
+- stopApp
+- launchApp
+- tapOn: { id: "TabBarItemTitle" }
+- inputText: ${LINK_URL}
+- pressKey: Enter
+- tapOn: { text: "OK", optional: true }
+- pressKey: Home
+# ── App: fresh install shows the tracking-consent screen; the answer decides the install's consent flag. ──
+- launchApp: { appId: io.linktrail.kickflipdemo, clearState: true }
+- tapOn: { id: "tracking-deny" }
+- extendedWaitUntil: { visible: { text: "KickFlip" }, timeout: 10000, optional: false }
+# No device-id step here: the published binary has no debug device id, so this run checks the UI
+# (and, on deny, the app's consent:false install line); the backend device lookup is off for it
+# (backend_checks.device_lookup in e2e-env.json).
