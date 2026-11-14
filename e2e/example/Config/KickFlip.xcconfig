@@ -1,0 +1,17 @@
+// KickFlip build settings shared by Debug and Release (wired up in project.yml).
+//
+// The workspace SDK key is never committed. It resolves, highest precedence first, from:
+//   1. EnvOverride.xcconfig via XCODE_XCCONFIG_FILE, i.e. $LINKTRAIL_KEY (only
+//      e2e/scripts/e2e-maestro.sh sets this up)
+//   2. Secrets.xcconfig next to this file, when it sets LINKTRAIL_API_KEY (gitignored; copy
+//      Secrets.xcconfig.example)
+//   3. the LINKTRAIL_KEY environment variable of the xcodebuild process
+// If none gives a valid key, the "Check LinkTrail SDK key" build phase fails the build.
+
+LINKTRAIL_API_KEY = $(LINKTRAIL_KEY)
+
+// SDK logging in the example. YES by default (the e2e runner reads the [LinkTrail] lines); set it
+// to NO in Secrets.xcconfig to build with logging off. Not a secret.
+LINKTRAIL_LOGS = YES
+
+#include? "Secrets.xcconfig"
