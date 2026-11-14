@@ -1,0 +1,28 @@
+appId: com.apple.mobilesafari
+---
+# WARM-UP, not a test row (e2e-maestro.sh runs it once per simulator before the first row; it is
+# not in e2e-flows.json). A fresh CI simulator pays several one-off costs on the first flow: the
+# Maestro iOS driver is installed, Safari starts cold, the first page load is slow, and Safari shows
+# a first-run tip ("View Bookmarks, Share Menu, and Open Tabs") over the page, which hides the page
+# from the accessibility tree. The first real row used to spend all of its attempts on that.
+# This loads a neutral page (no LinkTrail link, so no click is recorded) and dismisses the tip.
+# Seen on a fresh iOS 26 simulator: the page stays invisible to Maestro until "Close" on the tip is
+# tapped, then it reads at once.
+- stopApp
+- launchApp
+- tapOn: { id: "TabBarItemTitle", optional: true }
+- inputText: ${WARMUP_URL}
+- pressKey: Enter
+- extendedWaitUntil: { visible: { text: "Example Domain" }, timeout: 30000, optional: true }
+# The first-run tip: its close button, or a tap on the page, dismisses it.
+- tapOn: { id: "Close", optional: true }
+- tapOn: { text: "Close", optional: true }
+- tapOn: { point: "50%,12%", optional: true }
+# Load it again: it must now be readable, with nothing in front of it.
+- tapOn: { id: "TabBarItemTitle", optional: true }
+- inputText: ${WARMUP_URL}
+- pressKey: Enter
+- extendedWaitUntil: { visible: { text: "Example Domain" }, timeout: 60000, optional: true }
+- tapOn: { id: "Close", optional: true }
+- tapOn: { text: "Close", optional: true }
+- pressKey: Home

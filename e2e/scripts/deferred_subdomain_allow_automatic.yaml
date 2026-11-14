@@ -25,4 +25,4 @@ env:
 - tapOn: { id: "tracking-allow" }
 - tapOn: { text: "^Allow Paste$" }
 # EXPECT_VOUCHER_TEXT comes from the runner (scripts/e2e-env.json; the expect_voucher input overrides it).
-- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 10000, optional: false }
+- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 30000, optional: false }

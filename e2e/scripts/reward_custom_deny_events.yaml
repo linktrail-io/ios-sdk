@@ -12,7 +12,7 @@ env:
 - tapOn: { id: "TabBarItemTitle" }
 - inputText: ${LINK_URL}
 - pressKey: Enter
-- extendedWaitUntil: { visible: { text: "Continue to( the)? App Store" }, timeout: 20000 }
+- extendedWaitUntil: { visible: { text: "Continue to( the)? App Store" }, timeout: 60000 }
 - tapOn: { text: "Continue to( the)? App Store" }
 - tapOn: { text: "OK", optional: true }
 - pressKey: Home
@@ -23,11 +23,11 @@ env:
 - tapOn: { id: "consent-no-tracking" }
 - assertVisible: { id: "consent-tracking-off" }
 - tapOn: { text: "^Paste$" }
-- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 20000, optional: false }
+- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 30000, optional: false }
 # ── Events: the runner passes EVENTS_URL = kickflip://e2e-track?event=…; the DEBUG example app sends
 #    each event through LinkTrail.trackEvent (per_event: reward.eventName twice + one other event;
 #    rev_share: one revenue event in the reward's currency) and counts them on its debug footer. ──
 - openLink: ${EVENTS_URL}
 - tapOn: { text: "^Open$", optional: true }
-- extendedWaitUntil: { visible: { id: "debug-events-requested", text: "${EXPECT_EVENTS_TEXT}" }, timeout: 20000, optional: false }
+- extendedWaitUntil: { visible: { id: "debug-events-requested", text: "${EXPECT_EVENTS_TEXT}" }, timeout: 30000, optional: false }
 # Tracking is denied, so the SDK drops every one of them: nothing is sent and the earning stays 0.

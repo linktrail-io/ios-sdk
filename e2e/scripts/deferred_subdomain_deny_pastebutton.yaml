@@ -26,4 +26,4 @@ env:
 - assertVisible: { id: "consent-tracking-off" }
 - tapOn: { text: "^Paste$" }
 # Routed, not tracked. EXPECT_VOUCHER_TEXT comes from the runner (scripts/e2e-env.json).
-- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 20000, optional: false }
+- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 30000, optional: false }

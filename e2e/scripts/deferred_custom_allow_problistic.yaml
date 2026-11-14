@@ -20,7 +20,7 @@ env:
 # Granting consent sends the install with consent: true. What it must NOT do is read the clipboard —
 # `.none` promises that by any path, so no "Allow Paste" alert can appear.
 - assertNotVisible: { text: "would like to paste" }
-- extendedWaitUntil: { visible: { text: "KickFlip" }, timeout: 10000, optional: false }
+- extendedWaitUntil: { visible: { text: "KickFlip" }, timeout: 30000, optional: false }
 # Deliberately NOT asserting the product page. With no click token, routing would need the backend's
 # probabilistic (IP) match, which it does not implement: a click followed immediately by a token-less
 # install from the same IP returns attributed:false with no deepLink. Assert that when it does.

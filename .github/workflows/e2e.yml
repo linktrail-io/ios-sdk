@@ -6,8 +6,13 @@ name: E2E (published SDK)
 # the app on a simulator; e2e/scripts/e2e-flows.json lists the flows, e2e/scripts/e2e-env.json the
 # hosts and links (a link type with no link on prod is skipped with a notice). See e2e/README.md.
 #
-# GitHub-hosted macOS runners only. This workflow never publishes anything: it only reads the repo
-# and the tag. Publishing stays in publish.yml, which runs on podspec / framework changes to main.
+# GitHub-hosted runners only. This workflow never publishes anything: it only reads the repo and the
+# tag. Publishing stays in publish.yml, which runs on podspec / framework changes to main.
+#
+# Layout: `setup` resolves the links and checks the secrets; `e2e` runs the rows as SHARDS parallel
+# macOS jobs, each with its own simulator (e2e-maestro.sh SHARD_INDEX/SHARD_TOTAL: a deterministic,
+# balanced split; the probabilistic rows all go to the last shard); `report` merges the shards'
+# results into one report. Without the SDK key (fork pull requests) `build` only builds the example.
 #
 # SECRETS (repo Settings -> Secrets and variables -> Actions):
 #   LINKTRAIL_KEY  SDK key of the prod e2e workspace. Without it (fork pull requests never get
@@ -50,14 +55,18 @@ permissions:
 env:
   LANG: en_US.UTF-8
   LC_ALL: en_US.UTF-8
-  # Maestro CLI version installed on the runner.
+  # Maestro CLI version installed on the runners.
   MAESTRO_VERSION: '2.11.0'
 
 jobs:
-  e2e:
-    runs-on: macos-latest
-    # Builds (~5 min) plus ~40 flows at 1-2 min each on a hosted runner.
-    timeout-minutes: 150
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      flows: ${{ steps.secrets.outputs.flows }}
+      sdk_version: ${{ steps.targets.outputs.sdk_version }}
+      env_name: ${{ steps.targets.outputs.e2e_env_name }}
+      backend_url: ${{ steps.targets.outputs.backend_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -68,24 +77,22 @@ jobs:
         id: targets
         env:
           E2E_LINK_TYPES: ${{ inputs.link_types || vars.E2E_LINK_TYPES }}
-          E2E_REPORT_DIR: ${{ runner.temp }}/e2e-report
         run: |
           set -euo pipefail
-          rm -rf "$E2E_REPORT_DIR"; mkdir -p "$E2E_REPORT_DIR"
-          if ! out="$(python3 -I e2e/scripts/e2e-env.py resolve --format github --write "$E2E_REPORT_DIR/targets.json" 2>"$RUNNER_TEMP/e2e-env.err")"; then
+          if ! out="$(python3 -I e2e/scripts/e2e-env.py resolve --format github --write "$RUNNER_TEMP/targets.json" 2>"$RUNNER_TEMP/e2e-env.err")"; then
             err="$(grep -m1 '^ERROR: ' "$RUNNER_TEMP/e2e-env.err" || cat "$RUNNER_TEMP/e2e-env.err")"
             echo "::error title=e2e targets::${err#ERROR: }"; exit 1
           fi
-          printf '%s\n' "$out" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$out" | grep -E '^(e2e_env_name|backend_url)=' >> "$GITHUB_OUTPUT"
           skipped="$(printf '%s\n' "$out" | sed -n 's/^link_types_skipped=//p')"
           [ -z "$skipped" ] || echo "::notice title=e2e link types::skipped on prod (no link configured in e2e/scripts/e2e-env.json): $skipped"
           version="$(sed -n 's/^ *exactVersion: *"\{0,1\}\([^"]*\)"\{0,1\} *$/\1/p' e2e/example/project.yml | head -1)"
           [ -n "$version" ] || { echo "::error::no exactVersion for the LinkTrail package in e2e/example/project.yml"; exit 1; }
           echo "sdk_version=$version" >> "$GITHUB_OUTPUT"
           echo "Published SDK under test: $version"
-          python3 -I -c 'import json,sys; t=json.load(open(sys.argv[1])); print("Environment: %s · backend: %s" % (t["environment"], t["backend"])); [print("  %-26s %s" % (k, v)) for k, v in t["links"].items()]' "$E2E_REPORT_DIR/targets.json"
+          python3 -I -c 'import json,sys; t=json.load(open(sys.argv[1])); print("Environment: %s · backend: %s" % (t["environment"], t["backend"])); [print("  %-26s %s" % (k, v)) for k, v in t["links"].items()]' "$RUNNER_TEMP/targets.json"
 
-      # Fork PRs get no secrets: say so once and run the build-only check instead of the flows.
+      # Fork PRs get no secrets: say so once and run the build-only job instead of the flows.
       - name: Check secrets
         id: secrets
         env:
@@ -102,40 +109,42 @@ jobs:
             echo "::warning title=e2e::E2E_TOKEN is not set: the flows run, but every backend check is recorded as skipped."
           fi
 
+  # No secret: build every mode against the published package with a placeholder-shaped key the build
+  # check accepts. Nothing is installed or run, so the key is never sent anywhere.
+  build:
+    needs: setup
+    if: needs.setup.outputs.flows != 'true'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Toolchain
-        run: |
-          set -euo pipefail
-          xcodebuild -version
-          brew install xcodegen
-          xcodegen --version
-
-      # Maestro needs Java 17+.
-      - name: Java for Maestro
-        if: steps.secrets.outputs.flows == 'true'
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Install Maestro
-        if: steps.secrets.outputs.flows == 'true'
-        run: |
-          set -euo pipefail
-          curl -fsSL "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
-          "$HOME/.maestro/bin/maestro" --version
-
-      # No secret: build every mode against the published package with a placeholder-shaped key the
-      # build check accepts. Nothing is installed or run, so the key is never sent anywhere.
+        run: xcodebuild -version && brew install xcodegen
       - name: Build the example against the published SDK (no flows)
-        if: steps.secrets.outputs.flows != 'true'
         env:
           LINKTRAIL_KEY: lt_live_build_only_not_a_real_key
           E2E_BUILD_ONLY: '1'
         run: bash e2e/scripts/e2e-maestro.sh
 
-      - name: Boot a simulator
-        if: steps.secrets.outputs.flows == 'true'
+  e2e:
+    needs: setup
+    if: needs.setup.outputs.flows == 'true'
+    name: e2e (shard ${{ matrix.shard }}/4)
+    runs-on: macos-latest
+    # ~10 rows of 2-5 min each plus ~10 min of setup and warm-up; every row's attempts stop after
+    # ROW_BUDGET seconds and every maestro call after MAESTRO_TIMEOUT, so a shard cannot run away.
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      SHARD_TOTAL: '4'   # keep equal to the length of matrix.shard
+    steps:
+      # Booting takes minutes on a hosted runner: start it first, so it overlaps the installs and the
+      # build. The runner waits for it to finish (simctl bootstatus) before the warm-up.
+      - name: Start booting a simulator
         run: |
           set -euo pipefail
           UDID="$(xcrun simctl list devices available | grep 'iPhone ' \
@@ -143,16 +152,39 @@ jobs:
           [ -n "$UDID" ] || { echo "::error::no iPhone simulator available"; exit 1; }
           echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
           xcrun simctl boot "$UDID" >/dev/null 2>&1 || true
-          xcrun simctl bootstatus "$UDID" -b >/dev/null 2>&1 || true
-          xcrun simctl list devices booted
+          echo "Booting $UDID"
 
-      - name: E2E — Maestro flows (published SDK ${{ steps.targets.outputs.sdk_version }})
-        if: steps.secrets.outputs.flows == 'true'
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          brew install xcodegen
+
+      # Maestro needs Java 17+.
+      - name: Java for Maestro
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Maestro
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+          "$HOME/.maestro/bin/maestro" --version
+
+      - name: E2E — Maestro flows, shard ${{ matrix.shard }}/4 (published SDK ${{ needs.setup.outputs.sdk_version }})
         env:
           LINKTRAIL_KEY: ${{ secrets.LINKTRAIL_KEY }}
           E2E_TOKEN: ${{ secrets.E2E_TOKEN }}
           E2E_LINK_TYPES: ${{ inputs.link_types || vars.E2E_LINK_TYPES }}
           FLOWS: ${{ inputs.flows }}
+          SHARD_INDEX: ${{ matrix.shard }}
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: '240000'
           E2E_REPORT_DIR: ${{ runner.temp }}/e2e-report
         run: |
           set -euo pipefail
@@ -160,32 +192,77 @@ jobs:
           # shellcheck disable=SC2086
           DEVICE="$SIM_UDID" bash e2e/scripts/e2e-maestro.sh $FLOWS
 
-      # Always written once the flows ran (pass or fail): the run's Summary page and the e2e-report
-      # artifact. Nothing secret is in it: keys are removed and click tokens cut to 4 characters.
-      - name: E2E report — run summary
-        if: always() && steps.secrets.outputs.flows == 'true'
+      - name: Upload this shard's results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-shard-${{ matrix.shard }}
+          path: |
+            ${{ runner.temp }}/e2e-report/results.jsonl
+            ${{ runner.temp }}/e2e-report/plan.txt
+            ${{ runner.temp }}/e2e-report/plan-all.txt
+            ${{ runner.temp }}/e2e-report/targets.json
+            ${{ runner.temp }}/e2e-report/screenshots/
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Shut the simulator down
+        if: always()
+        run: '[ -n "${SIM_UDID:-}" ] && xcrun simctl shutdown "$SIM_UDID" || true'
+
+  # One report for the whole run, from every shard's results (written even when a shard failed or was
+  # cancelled: rows that never ran show as "not run"). Nothing secret is in it: keys are removed and
+  # click tokens cut to 4 characters.
+  report:
+    needs: [setup, e2e]
+    if: always() && needs.setup.outputs.flows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download the shards' results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: e2e-shard-*
+          path: ${{ runner.temp }}/shards
+
+      - name: Merge and render
         env:
+          SHARDS: ${{ runner.temp }}/shards
           E2E_REPORT_DIR: ${{ runner.temp }}/e2e-report
-          REPORT_ENV: ${{ steps.targets.outputs.e2e_env_name }}
-          REPORT_BACKEND: ${{ steps.targets.outputs.backend_url }}
+          REPORT_ENV: ${{ needs.setup.outputs.env_name }}
+          REPORT_BACKEND: ${{ needs.setup.outputs.backend_url }}
           REPORT_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
           REPORT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
-          SDK_VERSION: ${{ steps.targets.outputs.sdk_version }}
+          SDK_VERSION: ${{ needs.setup.outputs.sdk_version }}
+          E2E_RESULT: ${{ needs.e2e.result }}
         run: |
           set -uo pipefail
-          mkdir -p "$E2E_REPORT_DIR"
-          echo "Published SDK under test: **$SDK_VERSION** (SPM tag)" >> "$GITHUB_STEP_SUMMARY"
-          echo >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p "$E2E_REPORT_DIR/screenshots"
+          : > "$E2E_REPORT_DIR/results.jsonl"
+          for d in "$SHARDS"/e2e-shard-*; do
+            [ -d "$d" ] || continue
+            [ ! -f "$d/results.jsonl" ] || cat "$d/results.jsonl" >> "$E2E_REPORT_DIR/results.jsonl"
+            [ -f "$E2E_REPORT_DIR/plan.txt" ] || [ ! -f "$d/plan-all.txt" ] || cp "$d/plan-all.txt" "$E2E_REPORT_DIR/plan.txt"
+            [ -f "$E2E_REPORT_DIR/targets.json" ] || [ ! -f "$d/targets.json" ] || cp "$d/targets.json" "$E2E_REPORT_DIR/targets.json"
+            [ ! -d "$d/screenshots" ] || cp "$d"/screenshots/* "$E2E_REPORT_DIR/screenshots/" 2>/dev/null || true
+          done
+          {
+            echo "Published SDK under test: **$SDK_VERSION** (SPM tag) · shards: $E2E_RESULT"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
           if python3 -I e2e/scripts/e2e-report.py render --dir "$E2E_REPORT_DIR" \
-               --env "$REPORT_ENV" --backend "$REPORT_BACKEND" --commit "$REPORT_COMMIT" --runner "${RUNNER_NAME:-unknown}" \
+               --env "$REPORT_ENV" --backend "$REPORT_BACKEND" --commit "$REPORT_COMMIT" --runner "github-hosted (4 shards)" \
                --run-url "$REPORT_RUN_URL"; then
             cat "$E2E_REPORT_DIR/report.md" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "iOS SDK e2e: no results (the report could not be rendered; see the job log)" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: E2E report — artifact
-        if: always() && steps.secrets.outputs.flows == 'true'
+      - name: Upload the report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: e2e-report
@@ -196,7 +273,3 @@ jobs:
             ${{ runner.temp }}/e2e-report/screenshots/
           retention-days: 30
           if-no-files-found: warn
-
-      - name: Shut the simulator down
-        if: always()
-        run: '[ -n "${SIM_UDID:-}" ] && xcrun simctl shutdown "$SIM_UDID" || true'

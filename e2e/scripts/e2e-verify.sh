@@ -49,7 +49,7 @@ add_product_assert() {
   local app="$1" product="$2"
   [ -n "$product" ] || return 0
   grep -q 'EXPECT_VOUCHER_TEXT}' "$app" || return 0
-  python3 -I -c 'import json, sys; print("- extendedWaitUntil: { visible: { text: %s }, timeout: 10000, optional: false }" % json.dumps(sys.argv[1]))' "$product" >> "$app"
+  python3 -I -c 'import json, sys; print("- extendedWaitUntil: { visible: { text: %s }, timeout: 30000, optional: false }" % json.dumps(sys.argv[1]))' "$product" >> "$app"
 }
 
 # add_meta_assert <app.yaml> <link type> <source regex>: for a link-type matrix run, the allow flows
@@ -60,7 +60,7 @@ add_meta_assert() {
   grep -q 'EXPECT_VOUCHER_TEXT}' "$app" || return 0
   python3 -I -c '
 import json, sys
-print("- extendedWaitUntil: { visible: { id: \"meta-linkType\", text: %s }, timeout: 10000, optional: false }" % json.dumps(sys.argv[1]))
+print("- extendedWaitUntil: { visible: { id: \"meta-linkType\", text: %s }, timeout: 30000, optional: false }" % json.dumps(sys.argv[1]))
 if sys.argv[2]:
     print("- assertVisible: { id: \"meta-source\", text: %s }" % json.dumps(sys.argv[2]))
 ' "$ltype" "$source" >> "$app"
@@ -79,9 +79,17 @@ prepare_flow() {
   done
 }
 
-# capture_token <device>: the 32-hex lt_click token the interstitial staged, or nothing.
+# capture_token <device>: the 32-hex lt_click token the interstitial staged, or nothing. Polled for up
+# to TOKEN_WAIT seconds (default 15): on a slow CI simulator the page's clipboard write can reach
+# `simctl pbpaste` a few seconds after the Safari step has finished, though the app reads it fine.
 capture_token() {
-  { xcrun simctl pbpaste "$1" 2>/dev/null || true; } | grep -oE 'lt_click=[0-9a-fA-F]{32}' | head -1 | cut -d= -f2 || true
+  local t="" _
+  for _ in $(seq 1 "${TOKEN_WAIT:-15}"); do
+    t="$({ xcrun simctl pbpaste "$1" 2>/dev/null || true; } | grep -oE 'lt_click=[0-9a-fA-F]{32}' | head -1 | cut -d= -f2 || true)"
+    [ -z "$t" ] || break
+    sleep 1
+  done
+  printf '%s' "$t"
 }
 
 # expect_for <flow.yaml>: "allow click_token" | "allow probabilistic" | "deny". A re-engagement or

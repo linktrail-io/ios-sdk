@@ -16,7 +16,7 @@ env:
 # ── App: fresh install shows the tracking-consent screen; the answer decides the install's consent flag. ──
 - launchApp: { appId: io.linktrail.kickflipdemo, clearState: true }
 - tapOn: { id: "tracking-deny" }
-- extendedWaitUntil: { visible: { text: "KickFlip" }, timeout: 10000, optional: false }
+- extendedWaitUntil: { visible: { text: "KickFlip" }, timeout: 30000, optional: false }
 # No device-id step here: the published binary has no debug device id, so this run checks the UI
 # (and, on deny, the app's consent:false install line); the backend device lookup is off for it
 # (backend_checks.device_lookup in e2e-env.json).

@@ -27,4 +27,4 @@ env:
 - tapOn: { id: "tracking-deny" }
 - tapOn: { text: "^Allow Paste$" }
 # Routed, not tracked. EXPECT_VOUCHER_TEXT comes from the runner (scripts/e2e-env.json).
-- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 10000, optional: false }
+- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 30000, optional: false }

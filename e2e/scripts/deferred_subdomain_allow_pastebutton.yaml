@@ -23,4 +23,4 @@ env:
 - tapOn: { text: "^Paste$" }
 # Last stop: the deferred link lands on the linked product with its voucher applied.
 # EXPECT_VOUCHER_TEXT comes from the runner (scripts/e2e-env.json; the expect_voucher input overrides it).
-- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 20000, optional: false }
+- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 30000, optional: false }

@@ -61,6 +61,18 @@ DERIVED="$EXAMPLE/.build-e2e"
 STAGE="$DERIVED/staged"                 # one ready-to-install .app per mode
 RETRIES="${RETRIES:-3}"
 PARALLEL="${PARALLEL:-1}"
+# Time caps, so one stuck row cannot eat a CI job's whole budget:
+#   MAESTRO_TIMEOUT  seconds one maestro invocation may take (a hung driver is stopped, then retried)
+#   ROW_BUDGET       seconds after which a row starts no further attempt (the running one finishes)
+MAESTRO_TIMEOUT="${MAESTRO_TIMEOUT:-420}"
+ROW_BUDGET="${ROW_BUDGET:-720}"
+# Sharding (CI runs the rows over several jobs, each with its own simulator): this run takes only
+# shard SHARD_INDEX of SHARD_TOTAL (1-based). The split is deterministic and balanced; the
+# probabilistic rows all go to the last shard and run there serially. Default: one shard, all rows.
+SHARD_INDEX="${SHARD_INDEX:-1}"
+SHARD_TOTAL="${SHARD_TOTAL:-1}"
+# E2E_WARMUP=0 skips the warm-up before the first row (see warmup below).
+E2E_WARMUP="${E2E_WARMUP:-1}"
 
 # Which environment and links this run tests. Every host, slug and backend URL lives in ONE file,
 # e2e/scripts/e2e-env.json; e2e/scripts/e2e-env.py resolves it from these variables (all optional,
@@ -190,6 +202,37 @@ stage_mode() {
   echo "-- staged $mode"
 }
 
+# mrun <maestro args…>: maestro, stopped after MAESTRO_TIMEOUT seconds (exit 142). The launcher execs
+# java, so the alarm set here reaches the JVM itself. macOS has no `timeout`, hence perl.
+mrun() {
+  local rc=0
+  perl -e '$t = shift @ARGV; alarm $t; exec @ARGV or die "exec failed: $!\n"' "$MAESTRO_TIMEOUT" maestro "$@" || rc=$?
+  [ "$rc" -ne 142 ] || echo "maestro step timed out after ${MAESTRO_TIMEOUT}s (driver hang); stopped"
+  return "$rc"
+}
+
+# warmup <device>: one-off costs of a fresh CI simulator, paid before the first row instead of by it:
+# wait for the boot to finish, warm DNS/TLS for the link hosts on the host side (no link is
+# opened, so no click is recorded), then install the Maestro driver and open Safari once on a
+# neutral page, dismissing its first-run tip (scripts/_warmup_safari.yaml). Never fails the run.
+warmup() {
+  local device="$1" h
+  [ "$E2E_WARMUP" = "1" ] || return 0
+  echo "-- warm-up on ${device%%-*}"
+  xcrun simctl bootstatus "$device" -b >/dev/null 2>&1 || true
+  for h in "$CUSTOM_HOST" "$SUBDOMAIN_HOST" "${BACKEND_URL#https://}"; do
+    curl -s -o /dev/null --max-time 20 "https://$h/" >/dev/null 2>&1 || true
+  done
+  set_backend "$device"
+  if ! mrun --device "$device" test -e WARMUP_URL="https://example.com/" "$ROOT/scripts/_warmup_safari.yaml"; then
+    echo "WARN: warm-up did not finish cleanly; restarting the driver and trying once more"
+    pkill -f 'XCTestRunner|WebDriverAgent' >/dev/null 2>&1 || true
+    sleep 10
+    mrun --reinstall-driver --device "$device" test -e WARMUP_URL="https://example.com/" "$ROOT/scripts/_warmup_safari.yaml" \
+      || echo "WARN: warm-up failed again; the rows run anyway (their own retries apply)"
+  fi
+}
+
 # shellcheck source=e2e/scripts/e2e-verify.sh
 source "$ROOT/scripts/e2e-verify.sh"
 
@@ -261,7 +304,12 @@ run_flow() {
   applog="$(mktemp -t e2eapplog)"
   rurl="$(reengage_url "$url")"
   state="$parts/verify-state"
+  local row_started; row_started="$(date +%s)"
   for attempt in $(seq 1 "$RETRIES"); do
+    if [ "$attempt" -gt 1 ] && [ $(( $(date +%s) - row_started )) -ge "$ROW_BUDGET" ]; then
+      echo "WARN: $name — ${ROW_BUDGET}s row budget used up after $((attempt - 1)) attempt(s); no further retry"
+      break
+    fi
     started="$(date +%s)"
     : > "$log"
     set_backend "$device"                                                # point the SDK at this environment's API
@@ -282,10 +330,20 @@ run_flow() {
     printf '' | xcrun simctl pbcopy "$device"       # empty clipboard; the flow's Safari step stages the token
     echo "==== $name [$mode] $url on ${device%%-*} (attempt $attempt/$RETRIES) ===="
     # Safari half, then read the staged token off the pasteboard, then the app half (see split_flow).
-    if maestro ${reinstall:+$reinstall} --device "$device" test -e LINK_URL="$url" -e EXPECT_VOUCHER_TEXT="$vtext" "$parts/safari.yaml" 2>&1 | tee "$log"; then
+    if mrun ${reinstall:+$reinstall} --device "$device" test -e LINK_URL="$url" -e EXPECT_VOUCHER_TEXT="$vtext" "$parts/safari.yaml" 2>&1 | tee "$log"; then
       token="$(capture_token "$device")"
       if [ -n "$token" ]; then echo "-- $name: lt_click token captured (${token:0:8}…)"; else echo "-- $name: lt_click token not on the clipboard"; fi
-      if maestro --device "$device" test -e LINK_URL="$url" -e EXPECT_VOUCHER_TEXT="$vtext" "$parts/app.yaml" 2>&1 | tee "$log"; then
+      if [ -z "$token" ] && [ "$mode" != none ]; then
+        # Every click-token row's backend check needs the token, so a run without it can never pass:
+        # spend the attempt (fresh install, new click) instead of failing the row on it.
+        shot="$(failure_evidence "$device" "$name" "$attempt" "$applog")"
+        record_attempt "$name" "$attempt" fail "$started" --device "$device" --failed-step "read the lt_click token off the simulator pasteboard" \
+          --error "no lt_click token on the pasteboard after the Safari step" --screenshot "$shot"
+        echo "WARN: $name — no lt_click token after the Safari step (attempt $attempt/$RETRIES); retrying"
+        reinstall=""
+        continue
+      fi
+      if mrun --device "$device" test -e LINK_URL="$url" -e EXPECT_VOUCHER_TEXT="$vtext" "$parts/app.yaml" 2>&1 | tee "$log"; then
         # The UI passed; now the backend must agree. Not retried: a re-run would be a new click.
         # A link-type run also checks the link's reward and this click's earning (VERIFY_LINK_TYPE);
         # a flow with a third part keeps this check's counts and reward (VERIFY_STATE) for it.
@@ -344,7 +402,7 @@ run_flow() {
           esac
           if [ -z "${after_check:-}" ]; then
             echo "-- $name: backend check skipped, so the reward events are not sent"
-          elif maestro --device "$device" test -e LINK_URL="$url" -e EXPECT_VOUCHER_TEXT="$vtext" "${after_env[@]}" "$parts/after.yaml" 2>&1 | tee "$log"; then
+          elif mrun --device "$device" test -e LINK_URL="$url" -e EXPECT_VOUCHER_TEXT="$vtext" "${after_env[@]}" "$parts/after.yaml" 2>&1 | tee "$log"; then
             if [ "$after_check" = verify_reengage ]; then
               vout2="$(VERIFY_NAME="$name" VERIFY_LINK_TYPE="$ltype" verify_reengage "$flow" "$token" "$(cat "$state" 2>/dev/null)")" && vok=1 || vok=0
             else
@@ -423,7 +481,7 @@ PYCRASH
     # app is the victim, not the cause (crash reports on both dev machines and CI show SpringBoard
     # dying in -[XCTAutomationSession initWithAccessibilityFramework:], with the failing flow moving
     # run to run). Retrying through a fresh driver, after SpringBoard has respawned, is what works.
-    if grep -qiE "Transport unreachable|became unreachable|Connection refused|driver status check|driver not ready in time|IOSDriverTimeout|App crashed or stopped" "$log"; then
+    if grep -qiE "timed out after [0-9]+s \(driver hang\)|Transport unreachable|became unreachable|Connection refused|driver status check|driver not ready in time|IOSDriverTimeout|App crashed or stopped" "$log"; then
       echo "WARN: $name — the XCUITest driver/automation session died; restarting it before the retry"
       pkill -f 'XCTestRunner|WebDriverAgent' >/dev/null 2>&1 || true   # a half-dead driver blocks the next start
       reinstall="--reinstall-driver"
@@ -497,7 +555,39 @@ FLOW_COUNT="$(printf '%s\n' "$JOBS" | grep -c . || true)"
 # ---- start this run's report: the planned flows (rows for flows that never ran) and no results yet
 mkdir -p "$E2E_REPORT_DIR"
 rm -rf "$E2E_REPORT_DIR/screenshots"
-printf '%s\n' "$JOBS" | sed -e 's/\.yaml@/__/' > "$E2E_REPORT_DIR/plan.txt"
+# plan-all.txt: every row of the whole run, in run order, so a report merged from several shards
+# still lists each row once and in order (plan.txt below is this shard's own rows).
+printf '%s\n' "$JOBS" | sed -e 's/\.yaml@/__/' > "$E2E_REPORT_DIR/plan-all.txt"
+
+# ---- sharding: keep only this shard's rows ------------------------------------------------------
+case "$SHARD_INDEX/$SHARD_TOTAL" in
+  [1-9]/[1-9]|[1-9]/[1-9][0-9]|[1-9][0-9]/[1-9][0-9]) ;;
+  *) echo "ERROR: SHARD_INDEX/SHARD_TOTAL must be numbers (got '$SHARD_INDEX/$SHARD_TOTAL')"; exit 1 ;;
+esac
+[ "$SHARD_INDEX" -le "$SHARD_TOTAL" ] || { echo "ERROR: SHARD_INDEX $SHARD_INDEX is above SHARD_TOTAL $SHARD_TOTAL"; exit 1; }
+if [ "$SHARD_TOTAL" -gt 1 ]; then
+  # Deterministic and balanced by row count: the probabilistic rows (IP-matched, so they must not
+  # share a simulator with other rows' clicks) all go to the last shard; every other row goes, in
+  # run order, to the shard with the fewest rows so far (ties: the lowest index).
+  load=(); mine=""
+  for k in $(seq 1 "$SHARD_TOTAL"); do load[$k]=0; done
+  for f in $JOBS; do [ "$(mode_of "${f%@*}")" = none ] && load[$SHARD_TOTAL]=$(( ${load[$SHARD_TOTAL]} + 1 )); done
+  for f in $JOBS; do
+    if [ "$(mode_of "${f%@*}")" = none ]; then
+      k="$SHARD_TOTAL"
+    else
+      k=1
+      for c in $(seq 2 "$SHARD_TOTAL"); do [ "${load[$c]}" -lt "${load[$k]}" ] && k="$c"; done
+      load[$k]=$(( ${load[$k]} + 1 ))
+    fi
+    [ "$k" != "$SHARD_INDEX" ] || mine="$mine$f
+"
+  done
+  JOBS="$(printf '%s' "$mine" | grep . || true)"
+  FLOW_COUNT="$(printf '%s\n' "$JOBS" | grep -c . || true)"
+  echo "-- shard $SHARD_INDEX/$SHARD_TOTAL: $FLOW_COUNT of $(grep -c . "$E2E_REPORT_DIR/plan-all.txt") row(s)"
+fi
+printf '%s\n' "$JOBS" | grep . | sed -e 's/\.yaml@/__/' > "$E2E_REPORT_DIR/plan.txt" || true
 # The run's environment, backend and links, for the report header and its per-row links.
 python3 -I "$ENV_PY" resolve --write "$E2E_REPORT_DIR/targets.json" >/dev/null 2>&1 || exit 1
 echo "-- environment: $E2E_ENV_NAME · backend: $BACKEND_URL$([ "$SET_SDK_BASE" = 1 ] && echo ' (LINKTRAIL_BASE)')"
@@ -522,6 +612,8 @@ if [ "$PARALLEL" -le 1 ]; then
   DEVICE="${DEVICE:-$(xcrun simctl list devices booted | grep -oiE '[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}' | head -1)}"
   [ -n "$DEVICE" ] || { echo "ERROR: no booted simulator. Run 'open -a Simulator', boot one, then retry."; exit 1; }
   echo "-- device: $DEVICE"
+  if [ "$FLOW_COUNT" -eq 0 ]; then echo "OK: no rows in shard $SHARD_INDEX/$SHARD_TOTAL"; exit 0; fi
+  warmup "$DEVICE"
   # Keep going after a failed flow (as PARALLEL>1 always has), so the report has a row for every flow;
   # the run still fails at the end.
   FAIL=0
@@ -545,6 +637,7 @@ else
   pids=""; slot=0
   for dev in $DEVICE_LIST; do
     ( set +e; rc=0
+      warmup "$dev"
       while read -r f; do run_flow "$dev" "$f" || rc=1; done < "$WORK/queue.$slot"
       exit $rc
     ) > "$WORK/log.$slot" 2>&1 &

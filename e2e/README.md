@@ -13,8 +13,16 @@ Safari and the app on a simulator against the production backend.
   `scripts/*.yaml` file.
 - **Runner:** [`scripts/e2e-maestro.sh`](scripts/e2e-maestro.sh). It builds the example once for
   each consent mode, then installs the app fresh for every flow and runs it.
-- **CI:** [`.github/workflows/e2e.yml`](../.github/workflows/e2e.yml) runs on GitHub-hosted macOS
-  runners for pull requests, nightly and on manual dispatch. It never publishes anything.
+- **CI:** [`.github/workflows/e2e.yml`](../.github/workflows/e2e.yml) runs on GitHub-hosted runners
+  for pull requests, nightly and on manual dispatch. It never publishes anything.
+  - The rows run as 4 parallel macOS shards, each with its own simulator
+    (`SHARD_INDEX`/`SHARD_TOTAL`). The split is deterministic and balanced; the probabilistic rows
+    all go to the last shard. A final job merges the shards' results into one report.
+  - Before the first row, each shard runs a warm-up (`scripts/_warmup_safari.yaml`, not a test
+    row). It waits for the boot, installs the Maestro driver, opens Safari once on a neutral page
+    and dismisses Safari's first-run tip.
+  - Time caps: `MAESTRO_TIMEOUT` (420 s) for each Maestro call, and `ROW_BUDGET` (720 s), after which
+    a row starts no further retry.
 
 ## Flows
 
@@ -46,6 +54,7 @@ LINKTRAIL_KEY=lt_live_… E2E_TOKEN=… bash e2e/scripts/e2e-maestro.sh         
 LINKTRAIL_KEY=lt_live_… bash e2e/scripts/e2e-maestro.sh custom_allow_pastebutton  # one flow
 LINKTRAIL_KEY=lt_live_… E2E_LINK_TYPES=none bash e2e/scripts/e2e-maestro.sh       # no link-type matrix
 LINKTRAIL_KEY=lt_live_… E2E_BUILD_ONLY=1 bash e2e/scripts/e2e-maestro.sh         # build only
+LINKTRAIL_KEY=lt_live_… SHARD_INDEX=2 SHARD_TOTAL=4 bash e2e/scripts/e2e-maestro.sh # one CI shard
 ```
 
 `LINKTRAIL_KEY` is the SDK key of the e2e workspace. It reaches the build through the environment
