@@ -1,0 +1,33 @@
+{
+  "_comment": "The ONE place for e2e hosts, slugs and backend URLs. e2e/scripts/e2e-env.py resolves it with the run's choices (E2E_<SLOT>, E2E_EXPECT_*, E2E_LINK_TYPES) for e2e/scripts/e2e-maestro.sh and .github/workflows/e2e.yml. Nothing else may hardcode a host, slug or backend URL. The published SDK always talks to its built-in production backend, so the only environment is prod and 'override_backend' stays false. 'host' in links names the environment field the slug is served on; an override must use that same host. 'link_types': one dedicated link per link type and environment ({host, slug}, deep link /products/aj1, customData linkType/source); a type with no entry for the run's environment is skipped with a notice (e.g. 'event': its per_event link does not exist on prod). E2E_LINK_TYPES picks them (all, none, or a comma list). 'link_type_expect': what the link-type allow runs must show (product, voucher, and customData source next to linkType == the type). 'backend_checks': which verify-endpoint checks this environment's backend serves (earning = reward/earning on the click; device_lookup = lookup by SDK device id for the probabilistic flows, which needs the SDK's debug-only device id and so stays false for the published binary; reengagement_open_count = openCount counting a re-engagement open; events = the click's events/revenue after the reward-events flows). A false check is recorded as skipped, never pass or fail; a true one is required. 'link_type_rewards': the reward model each type's link must carry (null = no reward); the backend check reads the amount from the response, never from here. 'link_type_kinds': the real backend link type (general, campaign, influencer, partner) each matrix type's link has; event and revshare are pseudo-types. A per_event / rev_share type runs only on the flows that send events (e2e-flows.json link_type_matrix lists it); 'link_type_matrix: true' means every type whose reward is null or per_install. 'reward_events': what those flows send after the counted install (rev_share: one revenue_event worth revenue_minor in the reward's currency, plus the same in the first of other_currencies that differs, which must add nothing; a no-reward type (general) sends revenue_event twice + other_event once: counted as events, earning 0).",
+  "default_environment": "prod",
+  "environments": {
+    "prod": {
+      "backend_url": "https://backend.linktrail.io",
+      "key_secret": "LINKTRAIL_KEY",
+      "subdomain_host": "kick.linktrail.io",
+      "custom_host": "link.kynxlabs.com",
+      "override_backend": false,
+      "backend_checks": { "earning": true, "device_lookup": false, "reengagement_open_count": true, "events": true }
+    }
+  },
+  "links": {
+    "custom_link":               { "host": "custom_host",    "slug": "summer-sale" },
+    "subdomain_link":            { "host": "subdomain_host", "slug": "discounted-product" },
+    "custom_problistic_link":    { "host": "custom_host",    "slug": "custom-problistic" },
+    "subdomain_problistic_link": { "host": "subdomain_host", "slug": "ios-problistic" }
+  },
+  "expect": { "product": "", "voucher": "SUMMER25" },
+  "link_types": {
+    "general":    { "prod": { "host": "custom_host", "slug": "e2e-general" } },
+    "campaign":   { "prod": { "host": "custom_host", "slug": "e2e-campaign" } },
+    "influencer": { "prod": { "host": "custom_host", "slug": "e2e-influencer" } },
+    "partner":    { "prod": { "host": "custom_host", "slug": "e2e-partner" } },
+    "event":      {},
+    "revshare":   { "prod": { "host": "custom_host", "slug": "e2e-revshare" } }
+  },
+  "link_type_rewards": { "general": null, "campaign": null, "influencer": "per_install", "partner": "per_install", "event": "per_event", "revshare": "rev_share" },
+  "link_type_kinds": { "general": "general", "campaign": "campaign", "influencer": "influencer", "partner": "partner", "event": "influencer", "revshare": "partner" },
+  "reward_events": { "other_event": "e2e_other", "revenue_event": "purchase", "revenue_minor": 1999, "other_currencies": ["USD", "EUR"] },
+  "link_type_expect": { "product": "Air Jordan 1", "voucher": "SUMMER25", "source": "e2e" }
+}

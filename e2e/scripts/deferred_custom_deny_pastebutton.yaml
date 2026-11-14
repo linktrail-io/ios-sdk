@@ -1,0 +1,27 @@
+appId: com.apple.mobilesafari
+env:
+  # Build mode for this flow: no clipboard auto-read, so iOS shows NO "Allow Paste" alert —
+  # the app opens on the consent gate and the native Paste control is the consent.
+  LINKTRAIL_TOKEN_SOURCE: pasteButton
+---
+# CUSTOM domain × DENY (pasteButton) — full deferred flow, all in Maestro.
+# ── Safari: the interstitial stages the real lt_click token on the clipboard ──
+- stopApp
+- launchApp
+- tapOn: { id: "TabBarItemTitle" }
+- inputText: ${LINK_URL}
+- pressKey: Enter
+- extendedWaitUntil: { visible: { text: "Continue to( the)? App Store" }, timeout: 20000 }
+- tapOn: { text: "Continue to( the)? App Store" }
+- tapOn: { text: "OK", optional: true }
+- pressKey: Home
+# ── App: opens on the consent gate. "Don't track me" denies tracking, then the Paste tap still hands
+#    over the token without granting (deny still routes): one
+#    uncounted consent:false install, and the deferred link lands on the product with its voucher. ──
+- launchApp: { appId: io.linktrail.kickflipdemo, clearState: true }
+- assertVisible: "Welcome to KickFlip"
+- tapOn: { id: "consent-no-tracking" }
+- assertVisible: { id: "consent-tracking-off" }
+- tapOn: { text: "^Paste$" }
+# Routed, not tracked. EXPECT_VOUCHER_TEXT comes from the runner (scripts/e2e-env.json).
+- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 20000, optional: false }

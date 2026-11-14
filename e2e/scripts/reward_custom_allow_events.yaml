@@ -1,0 +1,35 @@
+appId: com.apple.mobilesafari
+env:
+  # Build mode for this flow: no clipboard auto-read, so iOS shows NO "Allow Paste" alert —
+  # the app opens on the consent gate and the native Paste control is the consent.
+  LINKTRAIL_TOKEN_SOURCE: pasteButton
+---
+# REWARD EVENTS × ALLOW — counted install, then the events the link's reward pays for. Runs only per
+# event-reward link type (scripts/e2e-flows.json: event = per_event, revshare = rev_share), as
+# reward_custom_allow_events__<type>.
+# ── Safari: the interstitial stages the real lt_click token on the clipboard ──
+- stopApp
+- launchApp
+- tapOn: { id: "TabBarItemTitle" }
+- inputText: ${LINK_URL}
+- pressKey: Enter
+- extendedWaitUntil: { visible: { text: "Continue to( the)? App Store" }, timeout: 20000 }
+- tapOn: { text: "Continue to( the)? App Store" }
+- tapOn: { text: "OK", optional: true }
+- pressKey: Home
+# ── App, first launch: the paste tap is the consent; the install is counted once and the deferred link
+#    lands on the product. The runner then checks the install and reads the reward (its eventName,
+#    currency and rate) to build EVENTS_URL. ──
+- launchApp: { appId: io.linktrail.kickflipdemo, clearState: true }
+- assertVisible: "Welcome to KickFlip"
+- tapOn: { text: "^Paste$" }
+- extendedWaitUntil: { visible: { text: "${EXPECT_VOUCHER_TEXT}" }, timeout: 20000, optional: false }
+# ── Events: the runner passes EVENTS_URL = kickflip://e2e-track?event=…; the DEBUG example app sends
+#    each event through LinkTrail.trackEvent (per_event: reward.eventName twice + one other event;
+#    rev_share: one revenue event in the reward's currency) and counts them on its debug footer. ──
+- openLink: ${EVENTS_URL}
+- tapOn: { text: "^Open$", optional: true }
+- extendedWaitUntil: { visible: { id: "debug-events-requested", text: "${EXPECT_EVENTS_TEXT}" }, timeout: 20000, optional: false }
+# The SDK sends them (consent granted); the runner then polls the earning:
+#   per_event: 2 × reward.amountMinor (the other event adds nothing);
+#   rev_share: floor(revenue_minor × reward.rateBps / 10000).
